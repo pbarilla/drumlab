@@ -1,0 +1,21 @@
+OscWave: Sine
+OscFreq: 240 Hz
+OscAtk: 0 ms
+OscDcy: 420 ms
+ModMode: Decay
+ModRate: 58 ms
+ModAmt: 26 st
+NFilMod: LP (low-pass)
+NFilFrq: 2400 Hz
+NFilQ: 0.7
+NEnvMod: Exponential
+NEnvAtk: 0 ms
+NEnvDcy: 40 ms
+Mix: 95% osc, 5% noise
+DistAmt: 18%
+EQFreq: 1000 Hz
+EQGain: 0 dB
+Level: -2 dB
+OscVel: 100%
+NVel: 100%
+ModVel: 30%

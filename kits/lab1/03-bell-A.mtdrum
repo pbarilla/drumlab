@@ -1,0 +1,21 @@
+OscWave: Triangle
+OscFreq: 585 Hz
+OscAtk: 0 ms
+OscDcy: 210 ms
+ModMode: Sine
+ModRate: 545 Hz
+ModAmt: 9 st
+NFilMod: BP (band-pass)
+NFilFrq: 2640 Hz
+NFilQ: 3
+NEnvMod: Exponential
+NEnvAtk: 0 ms
+NEnvDcy: 70 ms
+Mix: 82% osc, 18% noise
+DistAmt: 14%
+EQFreq: 1000 Hz
+EQGain: 0 dB
+Level: -5 dB
+OscVel: 100%
+NVel: 100%
+ModVel: 0%

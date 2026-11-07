@@ -1,0 +1,31 @@
+# Drumlab: the FX layer, then each effect on a playing beat
+400 btn 13
+500 keys 0x1
+550 keys 0
+600 keys 0x80
+650 keys 0
+700 keys 0x4000
+750 keys 0
+800 keys 0x200000
+850 keys 0
+900 enc 6 1
+950 keys 0x80
+1000 keys 0
+1050 keys 0x200000
+1100 keys 0
+1150 enc 6 1
+1200 keys 0x10
+1250 keys 0
+1300 keys 0x800
+1350 keys 0
+1400 keys 0x40000
+1450 keys 0
+1500 keys 0x1000000
+1550 keys 0
+1600 btn 13
+1650 btn 12
+2200 btn 2
+2400 keys 0x2
+2900 shot
+3000 keys 0
+3200 end

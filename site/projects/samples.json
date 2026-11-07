@@ -1,0 +1,22 @@
+[
+ {
+  "name": "Four on the floor",
+  "file": "samples/four-on-the-floor.drumlab",
+  "note": "TUBE kit, 124 bpm"
+ },
+ {
+  "name": "Breakbeat",
+  "file": "samples/breakbeat.drumlab",
+  "note": "DUSTY kit, 100 bpm"
+ },
+ {
+  "name": "Half-time",
+  "file": "samples/half-time.drumlab",
+  "note": "SPACE kit, 140 bpm"
+ },
+ {
+  "name": "Two-step",
+  "file": "samples/two-step.drumlab",
+  "note": "LAB-1 kit, 132 bpm"
+ }
+]

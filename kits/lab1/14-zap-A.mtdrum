@@ -1,0 +1,21 @@
+OscWave: Saw
+OscFreq: 2400 Hz
+OscAtk: 0 ms
+OscDcy: 210 ms
+ModMode: Decay
+ModRate: 70 ms
+ModAmt: -70 st
+NFilMod: LP (low-pass)
+NFilFrq: 8000 Hz
+NFilQ: 0.7
+NEnvMod: Exponential
+NEnvAtk: 0 ms
+NEnvDcy: 100 ms
+Mix: 90% osc, 10% noise
+DistAmt: 22%
+EQFreq: 1000 Hz
+EQGain: 0 dB
+Level: -8 dB
+OscVel: 100%
+NVel: 100%
+ModVel: 0%

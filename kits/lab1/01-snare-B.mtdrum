@@ -1,0 +1,21 @@
+OscWave: Triangle
+OscFreq: 210 Hz
+OscAtk: 0 ms
+OscDcy: 140 ms
+ModMode: Decay
+ModRate: 30 ms
+ModAmt: 18 st
+NFilMod: HP (hi-pass)
+NFilFrq: 1700 Hz
+NFilQ: 1.4
+NEnvMod: Exponential
+NEnvAtk: 0 ms
+NEnvDcy: 330 ms
+Mix: 30% osc, 70% noise
+DistAmt: 40%
+EQFreq: 1000 Hz
+EQGain: 0 dB
+Level: -2 dB
+OscVel: 100%
+NVel: 70%
+ModVel: 0%

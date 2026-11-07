@@ -1,0 +1,82 @@
+300 held 0x2000
+360 held 0x0
+420 keys 0x1
+470 keys 0
+520 keys 0x80
+570 keys 0
+620 keys 0x4000
+670 keys 0
+720 keys 0x200000
+770 keys 0
+820 enc 6 1
+860 keys 0x80
+910 keys 0
+960 keys 0x200000
+1010 keys 0
+1060 enc 6 1
+1100 keys 0x10
+1150 keys 0
+1200 keys 0x800
+1250 keys 0
+1300 keys 0x40000
+1350 keys 0
+1400 keys 0x1000000
+1450 keys 0
+1500 enc 6 4
+1540 keys 0x4
+1590 keys 0
+1640 keys 0x40
+1690 keys 0
+1740 keys 0x200
+1790 keys 0
+1840 keys 0x1000
+1890 keys 0
+1940 keys 0x10000
+1990 keys 0
+2040 keys 0x80000
+2090 keys 0
+2140 keys 0x800000
+2190 keys 0
+2240 keys 0x4000000
+2290 keys 0
+2340 held 0x2000
+2400 held 0x0
+2460 held 0x1000
+2520 held 0x0
+3280 shot
+3340 held 0x80
+3400 held 0x0
+3660 shot
+3720 enc 0 5
+3860 shot
+3920 held 0x80
+3980 held 0x0
+4140 held 0x1000
+4200 held 0x0
+4360 held 0x100
+5130 held 0x0
+5490 shot
+5550 enc 0 2
+5690 shot
+5750 held 0x100
+5810 held 0x0
+6170 shot
+6230 held 0x8
+6290 held 0x0
+6350 keys 0x40
+6400 keys 0
+6450 keys 0x40
+6500 keys 0
+6550 keys 0x1000
+6600 keys 0
+6750 shot
+6810 held 0x8
+6870 held 0x0
+6930 held 0x400
+6990 held 0x0
+7050 held 0x400
+7110 held 0x0
+7170 keys 0x10
+7220 keys 0
+7370 shot
+7430 end

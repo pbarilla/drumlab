@@ -1,0 +1,20 @@
+300 held 0x100
+360 held 0x0
+420 enc 6 5
+1360 shot
+1420 enc 1 1
+2360 shot
+2420 enc 1 1
+3360 shot
+3420 enc 1 1
+4360 shot
+4420 enc 1 1
+5360 shot
+5420 enc 1 1
+6360 shot
+6420 enc 1 1
+6460 enc 6 3
+6500 held 0x8
+6560 held 0x0
+7520 shot
+7580 end

@@ -1,0 +1,21 @@
+OscWave: Saw
+OscFreq: 5200 Hz
+OscAtk: 0 ms
+OscDcy: 260 ms
+ModMode: Noise FM
+ModRate: 2400 Hz
+ModAmt: 14 st
+NFilMod: HP (hi-pass)
+NFilFrq: 4700 Hz
+NFilQ: 1.5
+NEnvMod: Exponential
+NEnvAtk: 0 ms
+NEnvDcy: 1600 ms
+Mix: 20% osc, 80% noise
+DistAmt: 0%
+EQFreq: 8000 Hz
+EQGain: 6 dB
+Level: -8 dB
+OscVel: 100%
+NVel: 100%
+ModVel: 0%

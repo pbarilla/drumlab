@@ -1,0 +1,120 @@
+/* SPDX-License-Identifier: GPL-3.0-only */
+/* Drumlab's pages: a 1950s atomic lab. Colours are the device's (firmware/src/labdraw.c, K_*). */
+:root {
+  --bg:#1a1822; --plate:#262430; --rail:#2e2c3a; --line:#3a374a;
+  --cream:#eee4c6; --ink:#eee4c6; --dim:#9a96a8; --chrome:#cdd1d8;
+  --coral:#f06446; --mint:#6edcb9; --amber:#ffa03c; --navy:#142640; --teal:#42a094; --glass:#34260f;
+  --l1:#f06446; --l2:#fabe3c; --l3:#6edcb9; --l4:#aa8cf0;
+  --display:"Futura", "Century Gothic", "Avenir Next", "Jost", "Trebuchet MS", system-ui, sans-serif;
+  --mono:ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  color-scheme:dark;
+}
+* { box-sizing:border-box; }
+html { background:var(--bg); }
+body {
+  margin:0; color:var(--ink); font:16px/1.55 var(--mono);
+  background-color:var(--bg);
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='96' height='96'><g fill='none' stroke='%23eee4c6' stroke-opacity='.05' stroke-width='1.5' stroke-linecap='round'><path d='M12 4v16M4 12h16M7 7l10 10M17 7L7 17'/><path d='M60 52v8M56 56h8'/><circle cx='72' cy='24' r='2'/></g></svg>");
+}
+main { max-width:880px; margin:0 auto; padding:28px 16px 80px; }
+a { color:var(--mint); text-underline-offset:3px; }
+a:hover { color:#fff; }
+p { margin:0 0 12px; }
+:focus-visible { outline:2px solid var(--amber); outline-offset:2px; }
+
+/* masthead: the atom, the name, the tag */
+.mast { display:flex; align-items:center; gap:16px; margin:18px 0 6px; }
+.mast svg.atom { width:76px; height:76px; flex:none; }
+h1 { font:700 46px/1.05 var(--display); letter-spacing:.2em; text-transform:uppercase; margin:0; color:var(--cream); }
+h1 a { color:inherit; text-decoration:none; }
+.tag { display:inline-block; padding:3px 12px; background:var(--coral); color:#fff; font:700 13px/1.4 var(--display); letter-spacing:.2em; vertical-align:middle; margin-left:14px; border-radius:3px; }
+.sub { margin:0 0 22px; color:var(--dim); font-family:var(--display); letter-spacing:.14em; text-transform:uppercase; font-size:13px; }
+
+/* the radio dial */
+nav.dial { display:flex; flex-wrap:wrap; margin:0 0 30px; padding:0 8px; position:relative; border-radius:12px; border:2px solid #6a5a40;
+  background:linear-gradient(#2a1d0b, #3b2a10); box-shadow:inset 0 0 18px #000b, 0 2px 0 #000; overflow:hidden; }
+nav.dial::before { content:""; position:absolute; left:0; right:0; top:0; height:7px; pointer-events:none;
+  background:repeating-linear-gradient(90deg, #ffa03c88 0 1px, transparent 1px 10px), repeating-linear-gradient(90deg, #ffa03ccc 0 2px, transparent 2px 50px); background-size:100% 4px, 100% 7px; background-repeat:no-repeat; }
+nav.dial a { position:relative; padding:17px 14px 9px; color:#ffb552; text-decoration:none; font:700 13px/1.2 var(--display); letter-spacing:.16em; text-transform:uppercase; text-shadow:0 0 8px #ff9a2e66; }
+nav.dial a:hover { color:#fff1cf; }
+nav.dial a[aria-current] { color:#fff1cf; }
+nav.dial a[aria-current]::after { content:""; position:absolute; left:50%; top:0; bottom:0; width:2px; margin-left:-1px; background:var(--coral); box-shadow:0 0 8px var(--coral); }
+
+h2 { font:700 15px/1.3 var(--display); letter-spacing:.2em; text-transform:uppercase; color:var(--amber); margin:52px 0 14px; }
+h2::before { content:"\2736"; margin-right:10px; color:var(--coral); }
+.lead { font-size:19px; max-width:34em; }
+ul { padding-left:20px; margin:0 0 12px; } li { margin:4px 0; } ol { padding-left:22px; }
+code { font:700 .92em var(--mono); background:var(--cream); color:#1a1822; padding:1px 6px; border-radius:4px; white-space:nowrap; }
+pre { font:inherit; font-size:13px; background:var(--plate); padding:12px 14px; overflow-x:auto; margin:8px 0 14px; line-height:1.7; border-radius:8px; border:1px solid var(--line); }
+.dim { color:var(--dim); }
+.po { background:#f3f0e4; color:#1a1822; } /* the PO-32's own labels */
+
+/* buttons */
+.btns { display:flex; flex-wrap:wrap; gap:12px; margin:22px 0 0; }
+.btn, button.btn { display:inline-block; padding:11px 20px; background:var(--cream); color:#1a1822; text-decoration:none; font:700 14px/1.2 var(--display); letter-spacing:.14em; text-transform:uppercase; border:0; border-radius:8px; box-shadow:0 3px 0 #8a7f60; cursor:pointer; }
+.btn:hover { color:#1a1822; background:#fff6dc; }
+.btn.hot { background:var(--coral); color:#fff; box-shadow:0 3px 0 #9a3a28; }
+.btn.hot:hover { background:#ff7a5e; color:#fff; }
+.btn.alt { background:transparent; color:var(--cream); box-shadow:inset 0 0 0 2px #6a6680; }
+.btn.alt:hover { box-shadow:inset 0 0 0 2px var(--cream); background:transparent; color:#fff; }
+button:disabled { opacity:.35; cursor:default; }
+
+/* pictures */
+.shots { display:grid; grid-template-columns:repeat(3, 1fr); gap:14px; margin:28px 0 0; }
+.shots figure { margin:0; }
+.shots img { width:100%; height:auto; display:block; image-rendering:pixelated; background:var(--plate); border-radius:10px; border:2px solid #4a4658; }
+.shots figcaption { margin-top:6px; font:700 12px var(--display); letter-spacing:.2em; color:var(--dim); text-align:center; }
+img { display:block; max-width:100%; }
+
+/* brothers */
+.bros { display:grid; grid-template-columns:repeat(3, 1fr); gap:14px; margin:6px 0 0; }
+.bro { display:block; padding:16px 16px 14px; background:var(--plate); border:2px solid var(--line); border-radius:12px; color:var(--ink); text-decoration:none; }
+.bro b { display:block; font:700 17px var(--display); letter-spacing:.18em; text-transform:uppercase; }
+.bro span { color:var(--dim); font-size:14px; }
+.bro.me { border-color:var(--coral); }
+.bro.me b { color:var(--coral); }
+a.bro:hover { border-color:var(--cream); }
+
+/* guide and tutorials */
+.intro { color:var(--dim); margin:0 0 40px; }
+.toc { display:flex; flex-wrap:wrap; gap:6px 18px; margin:0 0 30px; font-size:14px; }
+.step { padding:34px 0 20px; border-top:1px solid var(--line); }
+.step h2 { margin:0 0 14px; display:flex; align-items:center; gap:14px; font-size:18px; letter-spacing:.14em; color:var(--cream); }
+.step h2::before { content:none; }
+.step h2 b { display:inline-grid; place-items:center; min-width:34px; height:34px; padding:0 8px; background:var(--coral); color:#fff; font:700 18px var(--display); border-radius:7px; letter-spacing:0; }
+.step h2 a { color:inherit; text-decoration:none; }
+.step h2 a:hover { color:var(--mint); }
+.item { padding:8px 0 12px; }
+.t { display:flex; gap:12px; min-width:0; }
+.t::before { content:"\2022"; color:var(--coral); flex:none; }
+.t > div { min-width:0; }
+.pic { margin:10px 0 4px 24px; max-width:620px; }
+.pic img { width:100%; height:auto; background:var(--plate); border-radius:12px; }
+.block { margin:6px 0 6px 24px; }
+.block p { margin:0 0 10px; }
+h3 { font:700 14px var(--display); letter-spacing:.16em; text-transform:uppercase; margin:22px 0 6px 24px; color:var(--mint); }
+table { border-collapse:collapse; width:100%; font-size:14px; margin:6px 0; }
+th, td { text-align:left; padding:6px 10px; border-bottom:1px solid var(--line); vertical-align:top; }
+th { color:var(--dim); font-weight:400; white-space:nowrap; }
+
+/* a pattern as 16 boxes */
+.grid { display:grid; grid-template-columns:auto repeat(16, 1fr); gap:3px; margin:6px 0 10px; max-width:640px; align-items:stretch; }
+.grid .h { color:var(--dim); font-size:11px; text-align:center; align-self:end; }
+.grid .h.b { color:var(--amber); }
+.grid .n { font:700 12px var(--display); letter-spacing:.06em; color:var(--cream); padding:0 8px 0 0; display:flex; align-items:center; white-space:nowrap; }
+.grid .n i { font-style:normal; display:inline-grid; place-items:center; width:20px; height:20px; border-radius:4px; margin-right:7px; color:#1a1822; font-size:12px; }
+.grid .c { aspect-ratio:1; min-height:18px; background:#2a2838; border-radius:3px; display:grid; place-items:center; font:700 10px var(--mono); color:#1a1822; }
+.grid .c.g { background:#36334a; }
+.grid .c.on { box-shadow:0 0 0 2px #0006 inset; }
+.grid .c.acc { outline:2px solid var(--cream); outline-offset:-2px; }
+.l1 { background:var(--l1) !important; } .l2 { background:var(--l2) !important; } .l3 { background:var(--l3) !important; } .l4 { background:var(--l4) !important; }
+.pcard { padding:22px 0 10px; border-top:1px solid var(--line); }
+.pcard h3 { margin:0 0 4px; }
+.pcard .meta { color:var(--dim); font-size:13px; margin:0 0 10px; }
+.pcard .how { margin:6px 0 0; font-size:14px; }
+.gridwrap { overflow-x:auto; }
+
+footer { margin-top:64px; color:var(--dim); font-size:14px; border-top:1px solid var(--line); padding-top:16px; }
+footer a { color:var(--dim); }
+@media (max-width:760px) { h1 { font-size:34px; letter-spacing:.14em; } .mast svg.atom { width:56px; height:56px; } .pic, .block { margin-left:0; } h3 { margin-left:0; } .shots, .bros { grid-template-columns:1fr; } nav.dial a { padding-left:10px; padding-right:10px; } }
+@media (prefers-reduced-motion:reduce) { * { animation:none !important; transition:none !important; } }
