@@ -22,6 +22,26 @@ static void demo_load(const demo_t *d)
     for (i = 0; i < d->nchain; i++) chain[i] = d->chain[i];
     tempo_set(d->bpm);
 }
+/* THE BLUETOOTH DEMO: a locked project to play with all three brothers (D minor, 124 BPM): pattern 1 the groove, pattern 2 the lift. Kicks on the lane 0, so the sidechain pumps. */
+static void bt_demo_load(void)
+{
+    static const uint8_t K[2][16] = {{1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0}, {1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0x11, 0}};     /* lane 0: kick (the second pattern adds a kick 2) */
+    static const uint8_t S[2][16] = {{0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0}, {0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1}};          /* lane 1: snare (and a fill) */
+    static const uint8_t H[2][16] = {{0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0}, {0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 0x11, 0}};      /* lane 2: hats, the lift has more and an open one */
+    static const uint8_t B[2][16] = {{0}, {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0x21}};
+    uint32_t p, s;
+    core_init(); kit_lab1();
+    for (p = 0; p < 2u; p++) {
+        memset(&pat[p], 0, sizeof pat[p]);
+        for (s = 0; s < 16u; s++) {
+            pat[p].trig[0][s] = K[p][s]; pat[p].trig[1][s] = S[p][s]; pat[p].trig[2][s] = H[p][s]; pat[p].trig[3][s] = B[p][s];
+            pat[p].lock[0][s][0] = pat[p].lock[1][s][0] = pat[p].lock[2][s][0] = pat[p].lock[3][s][0] = PITCH_MID;
+        }
+        pat[p].acc = 0x0101u;
+    }
+    chain_n = 0; cur_pat = 0; swing = 0; tempo_set(124);
+    bt_locked = 1; lab_dirty = 0;
+}
 static void demo_install(void)                                      /* the demos into the empty slots */
 {
     uint32_t i;

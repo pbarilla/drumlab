@@ -37,8 +37,11 @@ static const hl_t HELP_SEND[] = {{"PLAY", "Send  Stop"}, {"HOME", "View"}, {"HOM
 static const hl_t HELP_PICK[] = {{"SELECT", "Choose"}, {"HOME", "Open"}, {"HOME hold", "Close"}, {"EDIT hold", "Delete"}};
 
 /* ---- state */
-#define NMENU 6
+#define NMENU 7
 static uint8_t view, sel, pg, side, wr, accm, mutem, chainm, fx_layer, aud_loop;     /* mutem: 0 off, 1 mute, 2 solo */
+static uint8_t fx_lamp;
+static uint16_t p1_tog; static uint8_t p1_lat;                  /* the effects layer, page 1: the pads latched on, the latch */
+static uint8_t bt_on, bt_sel;                                  /* the Bluetooth page of the menu: Sync, Sidechain, Patterns */
 static uint8_t pick_on, pick_sel, del_ask, help_on, help_top, send_ask, menu_on, menu_sel, reset_ask, fx_latch, fx_held, kseq, kit_on, kit_sel, about_on, po_mode;      /* send_ask: the window that asks before the noise */
 static int8_t held_step = -1;
 static uint8_t pv_play = 1;
@@ -186,6 +189,26 @@ static void do_save(void)
 static uint32_t help_n(void) { return pick_on ? sizeof HELP_PICK / sizeof HELP_PICK[0] : view == V_PAT ? sizeof HELP_PAT / sizeof HELP_PAT[0] : view == V_SND ? sizeof HELP_SND / sizeof HELP_SND[0] : sizeof HELP_SEND / sizeof HELP_SEND[0]; }
 
 
+/* ---- the Bluetooth page (GLO + HOME, BLUETOOTH): the sync and what rides on it. The mode and the switches are kept (lset.flags) */
+static void bt_save(void) { lset.flags = (uint8_t)(brothers_mode | bt_side << 2 | bt_patsync << 3 | bt_fxsync << 4); set_dirty = 1; }
+static void bt_input(uint32_t bdown)
+{
+    int32_t e = fm1_enc_take(ENC_SELECT), d;
+    if (!e) e = fm1_enc_take(ENC_PRESETS);
+    (void)fm1_enc_take(ENC_KNOB1); (void)fm1_enc_take(ENC_ALGORITHM); (void)fm1_enc_take(ENC_KNOB2); (void)fm1_enc_take(ENC_KNOB3); (void)fm1_enc_take(ENC_KNOB4);
+    dirty = 1;
+    if (bdown & (1u << BTN_HOME | 1u << BTN_GLO)) { bt_on = 0; if (set_dirty && !sq_run) { settings_save(&lset, sizeof lset); set_dirty = 0; } return; }
+    if (e) bt_sel = (uint8_t)(((int32_t)bt_sel + 5 + e % 5) % 5);
+    d = (int32_t)(bdown >> BTN_OCT_UP & 1u) - (int32_t)(bdown >> BTN_OCT_DOWN & 1u);
+    if (!d) return;
+    if (bt_sel == 0u) brothers_set(((uint32_t)brothers_mode + 3u + (uint32_t)d) % 3u);
+    else if (bt_sel == 1u) bt_side ^= 1u;
+    else if (bt_sel == 2u) bt_patsync ^= 1u;
+    else if (bt_sel == 3u) bt_fxsync ^= 1u;
+    else if (d > 0) { seq_stop(); bt_demo_load(); bt_on = 0; menu_on = 0; view = V_PAT; wr = 1; chainm = 0; pg = 0; sel = 0; home_used = 1; pv_dirty = 1; dirty = 1; return; }       /* DEMO: the locked project */
+    bt_save();
+}
+
 /* ---- the system menu (GLO + HOME): MIDI clock, MIDI channel, the battery, factory reset, about */
 static void menu_input(uint32_t bdown)
 {
@@ -193,6 +216,7 @@ static void menu_input(uint32_t bdown)
     { int32_t k = fm1_enc_take(ENC_KNOB1); if (k && menu_sel == 2u) les_pick = (uint32_t)(((int32_t)les_pick + NLESSON + k % NLESSON) % NLESSON); }
     (void)fm1_enc_take(ENC_ALGORITHM); (void)fm1_enc_take(ENC_KNOB2); (void)fm1_enc_take(ENC_KNOB3); (void)fm1_enc_take(ENC_KNOB4);
     dirty = 1;
+    if (bt_on) { bt_input(bdown); return; }
     if (about_on) { if (bdown & (1u << BTN_OCT_UP | 1u << BTN_OCT_DOWN | 1u << BTN_HOME | 1u << BTN_GLO | 1u << BTN_PLAY)) about_on = 0; (void)fm1_enc_take(ENC_SELECT); (void)fm1_enc_take(ENC_PRESETS); return; }
     if (reset_ask) {                                                    /* a window: the buttons may be named inside it */
         if (bdown >> BTN_OCT_UP & 1u) {
@@ -218,7 +242,8 @@ static void menu_input(uint32_t bdown)
         if (menu_sel == 0u) { lset.sync = (uint8_t)((lset.sync + 3 + d) % 3); sync_mode = lset.sync; set_dirty = 1; }
         else if (menu_sel == 1u) { lset.chan = (uint8_t)((lset.chan + 17 + d) % 17); set_dirty = 1; }
         else if (menu_sel == 4u && d > 0) reset_ask = 1;
-        else if (menu_sel == 5u && d > 0) about_on = 1;
+        else if (menu_sel == 5u && d > 0) { bt_on = 1; bt_sel = 0; }                                   /* BLUETOOTH: its page */
+        else if (menu_sel == 6u && d > 0) about_on = 1;
     }
 }
 
@@ -390,16 +415,30 @@ static void ui_input(uint32_t keys, uint32_t kdown, uint32_t kup, uint32_t b, ui
         lock_step = st;
     }
     if (bdown >> BTN_FX & 1u) { fx_t0 = fm1_ms; fx_held = 1; }
-    if (bup >> BTN_FX & 1u) { fx_held = 0; if (fm1_ms - fx_t0 < 300u && view == V_PAT) fx_latch ^= 1u; }
+    if (bup >> BTN_FX & 1u) { fx_held = 0; if (fm1_ms - fx_t0 < 300u && view == V_PAT) fx_latch ^= 1u; }          /* a tap opens the layer, another tap puts it away; held, it is the layer while you hold it */
     { uint8_t f = (uint8_t)(view == V_PAT && (fx_held || fx_latch)); if (f != fx_layer) dirty = 1; fx_layer = f; }
     if (fx_layer && view != V_SEND) {                                  /* the punch-in layer: a key held is its effect on */
-        uint32_t mk = 0;
+        uint32_t mk = 0, fm;
+        static uint32_t pmk;
         for (i = 0; i < 16u; i++) if (keys >> WHITE[i] & 1u) mk |= 1u << i;
-        if (mk != fx_mask) dirty = 1;
+        {                                                              /* the shared pads, seven of the PO-32's, the latch (pad 16: a tap turns a pad on and the next tap off) */
+            uint32_t dn = mk & ~pmk, pad, held = mk & 0x7FFFu;
+            for (pad = 0; pad < 15u; pad++) if (p1_lat && (dn >> pad & 1u)) p1_tog ^= 1u << pad;
+            if (dn >> 15 & 1u) { p1_lat ^= 1u; if (!p1_lat) p1_tog = 0; }
+            held = p1_lat ? p1_tog : held;
+            bfx_local = (uint8_t)(held & 0xFFu);
+            fm = 0;
+            for (pad = 0; pad < 7u; pad++) if (held >> (8u + pad) & 1u) fm |= 1u << FX_PAD1[pad];
+            mk = fm | (p1_lat ? 1u << 16 : 0u);                          /* (bit 16: the latch lamp) */
+        }
+        pmk = keys ? (uint32_t)0 : 0u;
+        { uint32_t k2 = 0; for (i = 0; i < 16u; i++) if (keys >> WHITE[i] & 1u) k2 |= 1u << i; pmk = k2; }
+        if ((mk & 0xFFFFu) != fx_mask || (uint8_t)(mk >> 16) != fx_lamp) dirty = 1;
+        fx_lamp = (uint8_t)(mk >> 16);
         fx_mask = (uint16_t)mk;
         kdown = 0; kup = 0;
-    } else { if (fx_mask) dirty = 1; fx_mask = 0; fx_layer = fx_layer && view != V_SEND; }
-    if (fx_layer && wr && sq_run && sq_pat == cur_pat) {              /* WRITE on: the effects land on the step that plays; FX held with no key clears */
+    } else { if (fx_mask || bfx_local) dirty = 1; fx_mask = 0; bfx_local = 0; p1_lat = 0; p1_tog = 0; fx_lamp = 0; fx_layer = fx_layer && view != V_SEND; }
+    if (fx_layer && wr && sq_run && sq_pat == cur_pat) {              /* WRITE on: the PO-32's effects on the pads land on the step that plays (the shared ones are not recorded) */              /* WRITE on: the effects land on the step that plays; FX held with no key clears */
         uint32_t st = cur_step();
         if (fx_mask) { if ((pat[cur_pat].fx[st] | fx_mask) != pat[cur_pat].fx[st]) { pat[cur_pat].fx[st] |= fx_mask; lab_edited(); dsec |= SEC_BODY; } }
         else if (fx_held && !fx_latch && pat[cur_pat].fx[st]) { pat[cur_pat].fx[st] = 0; lab_edited(); dsec |= SEC_BODY; }

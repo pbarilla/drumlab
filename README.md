@@ -43,7 +43,7 @@ No PO-32? It's still a drum machine.
 
 ## The three brothers
 
-[Chipbox](https://github.com/pbarilla/chipbox) (chiptunes), [Smileyface](https://ihavenocluewhatimdoing.com/smileyface/) (acid) and Drumlab. Set MIDI CLOCK to SEND and Smileyface follows.
+[Chipbox](https://github.com/pbarilla/chipbox) (chiptunes), [Smileyface](https://ihavenocluewhatimdoing.com/smileyface/) (acid) and Drumlab. Over Bluetooth one of them leads and the others follow (GLO + HOME, BLUETOOTH): tempo, start and stop, a sidechain from the leader's kicks, patterns, punch-in effects and key. Each can also send and follow the standard MIDI clock over USB (MIDI CLOCK).
 
 ## Building the site
 

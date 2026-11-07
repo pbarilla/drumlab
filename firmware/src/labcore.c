@@ -36,12 +36,20 @@ static volatile uint8_t evq_w, evq_r;
 static struct { uint8_t s, acc, pitch, morph; } evq[8];
 static volatile uint16_t mute_mask;              /* a bit per lane */
 static volatile int8_t solo_lane = -1;
+static uint8_t bt_side, bt_patsync, bt_fxsync, bt_lastpat = 0xFFu;      /* Bluetooth sync, as a follower: the sidechain, following the leader's pattern (the menu) */
 
 /* the 16 punch-in effects of the PO-32, on the 16 keys while the FX layer is up */
 enum { FX_HALF, FX_DIST, FX_SQUASH, FX_ECHO, FX_PLFO, FX_EQSW, FX_MORPH, FX_BEND, FX_PUNCH, FX_68, FX_REP, FX_REP2, FX_FM, FX_GRAIN, FX_REV, FX_BOUNCE };
 #define FXB(n) (1u << (n))
 static volatile uint16_t fx_mask, fx_rec, fx_eff;       /* fx_mask: held now; fx_rec: recorded on the step that plays; fx_eff: both */
 static const char *const FX_NAME[16] = {"HALF", "DIST", "SQUASH", "ECHO", "P-LFO", "EQ SW", "MORPH", "BEND", "PUNCH", "6/8", "REPEAT", "REP 2", "FM", "GRAIN", "REVRSE", "BOUNCE"};
+
+/* the effects layer: pads 1-8 are the brothers' shared effects (bfx.c: the same code and the same pads on Chipbox and Smileyface, and the ones that travel over Bluetooth),
+ * 9-15 are seven of the PO-32's effects below (recorded on the steps like before), 16 is the latch. */
+#define BFX_POOL POOL_
+#include "bfx.c"
+static volatile uint8_t bfx_local;                               /* the shared pads held or latched on this brother */
+static const uint8_t FX_PAD1[7] = {FX_HALF, FX_DIST, FX_PLFO, FX_BEND, FX_GRAIN, FX_REV, FX_FM};     /* page 1, pads 9-15 */
 
 static void core_init(void)
 {
@@ -107,9 +115,10 @@ static void seq_play(void)
     sq_swing_left = 0; sq_pending = 0;
     clk_acc = sq_len;                                   /* the first clock tick on the first sample */
     if (sync_mode == 1u) midi_send(0xFAu, 0, 0);
+    if (brothers_mode == 1u) brothers_lead_run(1);
     sq_run = 1;
 }
-static void seq_stop(void) { if (sq_run && sync_mode == 1u) midi_send(0xFCu, 0, 0); sq_run = 0; fx_rec = 0; }
+static void seq_stop(void) { if (sq_run && sync_mode == 1u) midi_send(0xFCu, 0, 0); if (sq_run && brothers_mode == 1u) brothers_lead_run(0); sq_run = 0; fx_rec = 0; }
 
 /* ---- the effects that work on the sound (the others change the sequencer: below) */
 #define RB 32768u
@@ -135,25 +144,24 @@ static void fx_mix(int32_t *out, uint32_t n)
     for (i = 0; i < n; i++) {
         int32_t x = out[2u * i];
         fx_rb[rb_w & (RB - 1u)] = (int16_t)clip16(x); rb_w++;
-        if (m & FXB(FX_HALF)) { if (i & 1u) x = half_hold; else half_hold = x; }
         if (m & FXB(FX_DIST)) x = knee(x * 4, 16000);
         if (m & FXB(FX_SQUASH)) {
             int32_t a = x < 0 ? -x : x, g;
             sq_env = a > sq_env ? a : sq_env - (sq_env >> 11);
-            g = sq_env > 5000 ? (int32_t)(((int64_t)5000 << 12) / sq_env) : 4096;
-            x = (int32_t)(((int64_t)x * g) >> 12) * 3;
+            g = sq_env > 2500 ? (int32_t)(((int64_t)2500 << 12) / sq_env) : 4096;                 /* a hard compressor: everything is pulled to the same level, then brought up */
+            x = (int32_t)(((int64_t)x * g) >> 12) * 7;
         }
-        if (m & FXB(FX_PUNCH)) x = knee(x + (x >> 1), 22000);
-        if (m & FXB(FX_FM)) x = (int32_t)(((int64_t)x * sinq(fx_ph * 3u)) >> 30);
+        if (m & FXB(FX_PUNCH)) x = knee(x * 3, 14000);                                                         /* three times the level into a soft ceiling: it hits */
+        if (m & FXB(FX_FM)) x = (int32_t)(((int64_t)x * sinq(fx_ph * 16u)) >> 30) * 2;                           /* a ring modulator at about 340 Hz: metal */
         if (m & FXB(FX_EQSW)) {
             int32_t a = 20 + (int32_t)(((sinq(fx_ph >> 2) >> 20) + 1024) * 220 >> 11);        /* a low pass that swings: 20 .. 240 of 1024 */
             lp_y += (int32_t)(((int64_t)(x - lp_y) * a) >> 10);
             x = lp_y;
         }
         if (m & (FXB(FX_REP) | FXB(FX_REP2))) { x = fx_rb[(rp_start + rp_i) & (RB - 1u)]; if (++rp_i >= rp_len) rp_i = 0; }          /* beat repeat: the last step (or half of it), looped */
-        if (m & FXB(FX_BOUNCE)) {                                                                              /* the ball: a loop that shortens every time round */
-            x = fx_rb[(bb_end - bb_len + bb_i) & (RB - 1u)];
-            if (++bb_i >= bb_len) { bb_i = 0; bb_len = bb_len * 3u / 4u; if (bb_len < 260u) bb_len = 260u; }
+        if (m & FXB(FX_BOUNCE)) {                                                                              /* the ball: a loop that shortens every time round, and settles (it used to go on at a pitch: a honk) */
+            x = bb_len ? fx_rb[(bb_end - bb_len + bb_i) & (RB - 1u)] : 0;
+            if (bb_len && ++bb_i >= bb_len) { bb_i = 0; bb_len = bb_len * 3u / 4u; if (bb_len < 1100u) bb_len = 0; }
         }
         if (m & FXB(FX_GRAIN)) { x = fx_rb[(gr_start + gr_i) & (RB - 1u)]; if (++gr_i >= 2646u) gr_i = 0; }
         if (m & FXB(FX_REV)) { x = fx_rb[(rv_start - rv_i) & (RB - 1u)]; if (++rv_i >= 22050u) rv_i = 0; }
@@ -178,8 +186,9 @@ static uint32_t fx_pitch(uint32_t n)                       /* the oscillators' p
     uint32_t m = fx_eff;
     int32_t arg = 0;
     fx_t += n;
-    if (!(m & (FXB(FX_PLFO) | FXB(FX_BEND)))) { if (!(m & FXB(FX_BEND))) fx_t = 0; return 1u << 20; }
-    if (m & FXB(FX_PLFO)) arg += (int32_t)(((int64_t)sinq(fx_t * 780u) * 3355443) >> 30);        /* +-0.2 octave at 5 Hz */
+    if (!(m & (FXB(FX_PLFO) | FXB(FX_BEND) | FXB(FX_HALF)))) { if (!(m & FXB(FX_BEND))) fx_t = 0; return 1u << 20; }
+    if (m & FXB(FX_HALF)) arg -= 16777216;                                                                  /* half speed: an octave down */
+    if (m & FXB(FX_PLFO)) arg += (int32_t)(((int64_t)sinq(fx_t * 1100u) * 8388608) >> 30);       /* +-0.5 octave at 7 Hz */
     if (m & FXB(FX_BEND)) arg += (int32_t)(fx_t > 66000u ? 16777216 : (int32_t)((uint64_t)fx_t * 16777216u / 66000u));       /* up an octave in 1.5 s */
     return exp2fx(arg, 24, 20);
 }
@@ -200,10 +209,14 @@ static void fol_arm(void)
 {
     sq_step = 0; sq_cpos = 0; sq_pat = pat_now(); sq_swing_left = 0; sq_pending = 0; fol_ph = 5; fol_age = 0; sq_run = 1;
 }
+void bt_rt(uint32_t st)                                           /* the brothers' link (ble.c) makes the MIDI messages a follower hears: clock, start, stop */
+{
+    if (st == 0xF8u) mi_clk++; else if (st == 0xFAu) mi_start++; else if (st == 0xFCu) mi_stop++;
+}
 static uint32_t fol_ticks(uint32_t n)                              /* takes this block's clock and transport; the steps that came due */
 {
     uint32_t due = 0, t;
-    if (sync_mode != 2u) { fol_on = 0; fol_s_clk = mi_clk; fol_s_start = mi_start; fol_s_cont = mi_cont; fol_s_stop = mi_stop; return 0; }
+    if (sync_mode != 2u && brothers_mode != 2u) { fol_on = 0; fol_s_clk = mi_clk; fol_s_start = mi_start; fol_s_cont = mi_cont; fol_s_stop = mi_stop; return 0; }
     if (mi_start != fol_s_start) { fol_s_start = mi_start; fol_arm(); }
     if (mi_cont != fol_s_cont) { fol_s_cont = mi_cont; sq_run = 1; }
     if (mi_stop != fol_s_stop) { fol_s_stop = mi_stop; seq_stop(); }
@@ -227,6 +240,7 @@ static void core_audio(int32_t *out, uint32_t n)
     uint32_t i, l, m, pitch;
     uint32_t len = sq_len, sw = swing;
     fx_eff = (uint16_t)(fx_mask | (sq_run ? fx_rec : 0u)); m = fx_eff;
+    if (brothers_mode == 2u && bt_patsync && brothers_pat() != 0xFFu) sw = brothers_swing() * 3u / 8u;      /* and its swing (the leader's, in 1/96 of a step; ours is in 1/36) */
     while (evq_r != evq_w) {
         uint32_t k = evq_r & 7u;
         fire(evq[k].s, evq[k].acc, evq[k].pitch, evq[k].morph);
@@ -243,7 +257,18 @@ static void core_audio(int32_t *out, uint32_t n)
     fx_prev = (uint16_t)m;
     if (m & FXB(FX_68)) sw = 8u;
     {
-        uint32_t due = fol_ticks(n), ext = sync_mode == 2u && fol_on;
+        uint32_t due, ext;
+        brothers_poll();                                        /* a follower: the leader's packets into clock ticks (mi_clk ...), here, in the audio block */
+        if (brothers_mode == 1u) {                              /* the leader: the pattern and its kicks (lane 0) */
+            uint32_t km = 0, s2;
+            const lpat_t *q = &pat[sq_pat];
+            for (s2 = 0; s2 < 16u; s2++) if (q->trig[0][s2] & 15u) km |= 1u << s2;
+            brothers_lead_set(sq_pat, km, bfx_local, 0, (uint32_t)swing * 8u / 3u);
+        } else if (brothers_mode == 2u && bt_patsync) {         /* a follower: the leader's pattern, at the next bar */
+            uint32_t p = brothers_pat();
+            if (p != 0xFFu && p != bt_lastpat) { bt_lastpat = (uint8_t)p; if (!chain_n) cur_pat = (uint8_t)p; }
+        } else bt_lastpat = 0xFFu;
+        due = fol_ticks(n); ext = (sync_mode == 2u || brothers_mode == 2u) && fol_on;
         len = sq_len;
         while (due--) seq_advance(sw, len);
         if (sq_run)
@@ -253,13 +278,21 @@ static void core_audio(int32_t *out, uint32_t n)
                     else { sq_pending = 0; step_fire(last_ps); }
                 }
                 if (ext) continue;                                      /* the outside clock moves the steps */
-                if (sync_mode == 1u) { clk_acc += 1536u; if (clk_acc >= len) { clk_acc -= len; midi_send(0xF8u, 0, 0); } }
+                if (sync_mode == 1u || brothers_mode == 1u) { clk_acc += 1536u; if (clk_acc >= len) { clk_acc -= len; if (sync_mode == 1u) midi_isr_send(0xF8u, 0, 0); if (brothers_mode == 1u) brothers_lead_tick(i, (uint32_t)(((uint64_t)sq_len * 23220u) >> 16)); } }
                 sq_phase += 256u;
                 if (sq_phase >= len) { sq_phase -= len; seq_advance(sw, len); }
             }
     }
     pitch = fx_pitch(n);
+    if (bfx_pitch) pitch = (uint32_t)(((uint64_t)pitch * exp2fx(bfx_pitch * 5461, 24, 20)) >> 20);          /* the tape stop's dive */
     for (l = 0; l < 4u; l++)
         if (lv[l].on) drum_mix_fp(&lv[l], out, (int)n, 6, pitch);
     if (m) fx_mix(out, n); else { for (i = 0; i < n; i++) { fx_rb[rb_w & (RB - 1u)] = (int16_t)clip16(out[2u * i]); rb_w++; } }
+    { static uint32_t t60; t60 += n; if (t60 >= 735u) { t60 -= 735u; bfx_tick(); } }                  /* the shared effects (bfx.c) */
+    bfx_mask = bfx_local | (brothers_mode == 2u && bt_fxsync ? brothers_fx() & 0xFFu : 0u);          /* ours, and the leader's */
+    if (bfx_busy() || bfx_mask) bfx_run(out, n, sq_len ? sq_len >> 8 : 5000u);
+    if (brothers_mode == 2u && bt_side) {                       /* the sidechain: the leader's kicks pull everything down and let go */
+        uint32_t g = brothers_duck(190u);
+        if (g < 256u) for (i = 0; i < 2u * n; i++) out[i] = ((out[i] >> 4) * (int32_t)g) >> 4;
+    }
 }

@@ -35,11 +35,12 @@ import lz4blk  # noqa: E402
 APP_XIP = 0x02000120                # app.bin offset 0 in the XIP map; the SPL jumps here
 APP_SLOT = fm1pkg_make.APP_SLOT
 LOADER_LOAD = 0x01C0A800
-# The update loader is the way back from a bad install: it must stay byte for byte what Chipbox and Smileyface ship (since 2026-11-07 it also accepts the UC25HQ80 flash, JEDEC 0xB36014) (a bigger one bricked a test FM-1).
-LOADER_SHA256 = "823d78e495b0087a734d22911ee5ab0d7aa2faa03272710350ef37766132228e"
+# The update loader is the way back from a bad install: it must stay byte for byte what Chipbox and Smileyface ship (since 2026-11-07 it also accepts the UC25HQ80 flash, JEDEC 0xB36014; since 2026-11-08 it draws the UPDATING screen) (a bigger one bricked a test FM-1).
+LOADER_SHA256 = "5500ab04a6de9274a7588f757d2d01b5fbb549db26c7c575f271fd12c0b323f1"
 LOADER_NAME = b"usb_hid_ota.bin"    # the file name the SPL looks for
 DOCKER_IMAGE = os.environ.get("JIELI_DOCKER_IMAGE", "debian:bookworm-slim")
 CFLAGS = ["-Os", "-ffunction-sections", "-fno-builtin", "-Wall", "-Wno-unused-function"]
+BLE_FLAGS = ["-Os", "-ffunction-sections", "-fno-builtin", "-Wall", "-Wno-unused-function", "-Ifirmware/ble/chip", "-Ifirmware/ble/stack"]   # felucca-bsp's headers, not firmware/hal's
 LINE = re.compile(r"^\s*([0-9a-f]+):\s+((?:[0-9a-f]{2} )+)\s*\t(.*)$")
 
 # SDK files of AC79NN_SDK_V1.2.1_2023-12-13 (the tested version)
@@ -146,7 +147,7 @@ def build_loader():
     ota = ldr_wrap(image)
     (LDR / "ota.bin").write_bytes(ota)
     if hashlib.sha256(ota).hexdigest() != LOADER_SHA256:
-        raise SystemExit("build: the update loader differs from the known-good one (LOADER_SHA256). Do not flash this. "
+        raise SystemExit(f"build: the update loader differs from the known-good one (LOADER_SHA256; this one is {hashlib.sha256(ota).hexdigest()}, {len(ota)} B). Do not flash this. "
                          "Flags and sources of the loader must not change; use per-target flags.")
     bss = [int(ln.split()[0], 16) for ln in syms.splitlines() if ln.rstrip().endswith("_bss_end")]
     print(f"loader: image {len(image)} B at {LOADER_LOAD:#x}" + (f", bss end {bss[0]:#x}" if bss else ""))
@@ -161,11 +162,12 @@ def build_app():
     cmds = [("cc", "-c", FW / "crt0.S", "-o", OUT / "crt0.o"),
             ("cc", "-c", FW / "hal" / "fm1_vec.S", "-o", OUT / "fm1_vec.o"),
             ("cc", "-c", FW / "hal" / "fm1_isr.S", "-o", OUT / "fm1_isr.o"),
-            ("cc", *flags, "-c", FW / "src" / "lab.c", "-o", OUT / "drumlab.o")]
+            ("cc", *flags, "-c", FW / "src" / "lab.c", "-o", OUT / "drumlab.o"),
+            ("cc", *BLE_FLAGS, "-c", FW / "ble" / "ble.c", "-o", OUT / "ble.o")]      # the radio: its own unit, the app only (the update loader has none of it)
     tc_all(*cmds)
     elf = OUT / "drumlab.elf"
     tc("pi32v2/bin/ld", "--gc-sections", "-e", "_start", "-T", FW / "app.ld", OUT / "crt0.o", OUT / "fm1_vec.o",
-       OUT / "fm1_isr.o", OUT / "drumlab.o", "-o", elf)
+       OUT / "fm1_isr.o", OUT / "drumlab.o", OUT / "ble.o", "-o", elf)
     for sect in ("text.bin", "data.bin", "ramtext.bin"):
         (OUT / sect).unlink(missing_ok=True)
     *_, syms, dis, rt = tc_all(("common/bin/objcopy", "-O", "binary", "-j", ".text", elf, OUT / "text.bin"),

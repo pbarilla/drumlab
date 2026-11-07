@@ -90,8 +90,10 @@ static int lab_store(uint32_t slot, const uint8_t *buf, uint32_t len)     /* a p
     if (pf_write(base, &nh, sizeof nh)) return -1;
     return 0;
 }
+static uint8_t bt_locked;                /* the Bluetooth demo is on: a locked project, in memory only (nothing of it is saved; opening a project ends it) */
 static int lab_save(uint32_t slot)       /* stopped and silent: an erase stalls the sound */
 {
+    if (bt_locked) return 0;
     return lab_store(slot, lab_buf, lab_pack(lab_buf));
 }
 static void lab_clear(uint32_t slot) { pf_erase(lab_base(slot, 0)); pf_erase(lab_base(slot, 1)); }
@@ -125,6 +127,7 @@ static void proj_boot(void)
     if (settings_load(&t, sizeof t) == 0 && t.magic == LSET_MAGIC && t.slot < LAB_SLOTS && t.sync < 3u && t.chan < 17u) { lset = t; fresh = 0; }
     if (fresh) { demo_install(); settings_save(&lset, sizeof lset); }                  /* a new device: the demos go into the empty slots */
     lab_slot = lset.slot; sync_mode = lset.sync;
+    bt_side = lset.flags >> 2 & 1u; bt_patsync = lset.flags >> 3 & 1u; bt_fxsync = lset.flags >> 4 & 1u;            /* Bluetooth sync: bits 0-1 the mode, 2 sidechain, 3 follow patterns */
     lab_loaded = lab_load(lab_slot) == 0;
     lab_dirty = 0;
 }
@@ -132,6 +135,7 @@ static void lab_open(uint32_t slot)       /* switch projects: what is unsaved is
 {
     seq_stop();
     if (lab_dirty) { lab_save(lab_slot); lab_dirty = 0; }
+    bt_locked = 0;
     lab_slot = (uint8_t)slot;
     if (lab_load(slot) != 0) core_init();
     lab_loaded = lab_exists(slot);

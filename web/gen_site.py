@@ -32,7 +32,8 @@ def lessons():
 
 KITS = kit_names()
 LESSON_NAMES = lessons()
-FX = ["HALF", "DIST", "SQUASH", "ECHO", "P-LFO", "EQ SW", "MORPH", "BEND", "PUNCH", "6/8", "REPEAT", "REP 2", "FM", "GRAIN", "REVRSE", "BOUNCE"]
+FX = ["HALF", "DIST", "SQUASH", "ECHO", "P-LFO", "EQ SW", "MORPH", "BEND", "PUNCH", "6/8", "REPEAT", "REP 2", "FM", "GRAIN", "REVRSE", "BOUNCE"]      # page 2: the PO-32's
+FX1 = ["STOP", "REPEAT", "LPF", "HPF", "ECHO", "REVERB", "CRUSH", "GATE", "HALF", "DIST", "P-LFO", "BEND", "GRAIN", "REVRSE", "FM", "LATCH"]      # page 1: the shared eight, seven of ours, the latch
 LABELS = {1: "Kick", 2: "Snare", 3: "Hat", 4: "Bell"}
 
 
@@ -87,7 +88,7 @@ def index():
     <a class="bro" href="../smileyface/"><b>Smileyface</b><span>An acid bass line.</span></a>
     <div class="bro me"><b>Drumlab</b><span>This one. Drums, and a PO-32.</span></div>
   </div>
-  <p style="margin-top:14px">They get along: Drumlab can send MIDI clock, and Smileyface follows it. <a href="manual/smileyface/">Here's how</a>.</p>
+  <p style="margin-top:14px">They get along: over Bluetooth one of them leads and the others follow. Tempo, kicks, patterns and effects. <a href="manual/sync/">Here's how</a>.</p>
 
   <h2 id="install">Install</h2>
   <p><a href="install.html">install it from your browser</a>.</p>
@@ -199,7 +200,7 @@ def pad_map():
 def fx_map():
     rows = []
     for r in range(4):
-        rows.append("".join('<td style="text-align:center"><code>%s</code></td>' % FX[r * 4 + c] for c in range(4)))
+        rows.append("".join('<td style="text-align:center"><code>%s</code></td>' % FX1[r * 4 + c] for c in range(4)))
     return '<table style="width:auto">' + "".join("<tr>%s</tr>" % r for r in rows) + "</table>"
 
 
@@ -249,10 +250,11 @@ def guide():
         I("To change one step, hold its key in WRITE and turn `KNOB 3` or `KNOB 4`. That's a step lock."),
         I("To change many, hold `REC` while it plays and turn the knobs. They write into the steps of the sound you picked as they pass."), id="locks")
     d.section("Effects",
-        I("Hold `FX` and press keys. Each key is an effect, on for as long as you hold it.", "g-fx"),
+        I("Tap `FX` and the 16 white keys become effects. Hold a key for its effect. Tap `FX` again to put them away. Or hold `FX` for the layer while you hold it.", "g-fx"),
         d.block(fx_map()),
-        I("Tap `FX` to latch the layer, tap it again to put it away."),
-        I("With WRITE on and the pattern playing, the effects you press are written into the steps as they pass."),
+        I("Pads 1 to 8 are the same on Chipbox, Smileyface and Drumlab, and they travel over Bluetooth: STOP, REPEAT, LPF, HPF, ECHO, REVERB, CRUSH and GATE."),
+        I("Pads 9 to 15 only exist on Drumlab: HALF, DIST, P-LFO, BEND, GRAIN, REVRSE and FM. They are the PO-32's effects, so with WRITE on and the pattern playing, they are written into the steps as they pass."),
+        I("Pad 16 is the LATCH. With it on, a tap holds a pad on and the next tap lets it go."),
         I("With WRITE on, hold `FX` and press nothing while it plays to wipe the effects from the steps as they pass."), id="fx")
     d.section("The SOUND view",
         I("`PRESETS` picks the sound.", "g-knobs"),
@@ -402,18 +404,27 @@ def t_send(d):
 
 def t_smiley(d):
     I = d.item
-    d.section("Drumlab sends the clock",
-        I("Hit `GLO` + `HOME` for the menu.", "y-menu"),
-        I("MIDI CLOCK is the first row. Hit `OCT+` until it says SEND.", "y-clock"),
-        I("Tap `HOME` to leave."))
-    d.section("Wire them up",
-        I("Plug both FM-1s into your computer."),
-        I("In your DAW, or any MIDI router, send Drumlab's MIDI out to Smileyface's MIDI in."),
-        I("Pass only the clock, start and stop. Drumlab's pad notes would play Smileyface's voice."))
+    d.section("Pick the leader",
+        I("Hit `GLO` + `HOME` for the menu, pick BLUETOOTH and hit `OCT+`."),
+        I("On the leader, set SYNC to LEAD. On the others, set it to FOLLOW. `OCT+` changes it."),
+        I("Any of Drumlab, Chipbox and Smileyface can lead. One at a time."),
+        I("STATUS says SEARCHING while a follower looks, LINKED when it hears the leader, and IN SYNC when it plays along."))
     d.section("Play",
-        I("Hit `PLAY` on Drumlab. Smileyface starts with it and keeps its tempo.", "y-play"),
-        I("`KNOB 1` on Drumlab sets the tempo for both. `PLAY` stops them both."),
-        I("Smileyface lives <a href=\"../../../smileyface/\">here</a>."))
+        I("Hit `PLAY` on the leader. The followers start at the next bar and take its tempo."),
+        I("Change the leader's tempo and they follow. `PLAY` on the leader stops them all."),
+        I("No cables and no pairing. Keep them in the same room."))
+    d.section("What else comes along",
+        I("SIDECHAIN: the leader says where its kicks are. The followers duck on each one and swell back, so the bass pumps against the beat. Drumlab sends its first lane."),
+        I("PATTERNS: when the leader changes pattern, the followers change at the end of their loop. Its swing comes along too."),
+        I("PUNCH-IN FX: hold one of pads 1 to 8 on page 1 of the effects layer on the leader and the followers do it too: STOP, REPEAT, LPF, HPF, ECHO, REVERB, CRUSH and GATE. Pads 9 to 15 are different on each FM-1 and don't travel."),
+        I("KEY: Chipbox and Smileyface work out the key of what they play. A following one moves its notes to the leader's key. Drumlab has no notes, so it has no KEY row."))
+    d.section("The demo",
+        I("DEMO loads a locked project: D minor, 124 BPM. Load it on each brother, make one the leader, and hit `PLAY`."),
+        I("Nothing in it is saved. Open any project to leave it."))
+    d.section("Or use MIDI clock",
+        I("MIDI CLOCK in the menu sends or follows the standard MIDI clock over USB. Use it with a DAW or another box."),
+        I("Plug the FM-1s into your computer and route the leader's MIDI out to each follower's MIDI in. Pass only the clock, start and stop."),
+        I("Before you install a new firmware, set SYNC to OFF. While the radio runs, the FM-1 can stop answering the installer."))
 
 
 def t_patterns(d):
@@ -433,7 +444,7 @@ def tutorials():
     tutorial("first-beat", "Your first beat", "A house beat in about two minutes: kick, snare, hat. Start here.", t_first)
     tutorial("make-a-kit", "Make a kit", "Roll a new kit, keep it, and bend a sound of it. Carry on from your first beat.", t_kit)
     tutorial("send-po32", "Send to a PO-32", "Your sounds and patterns, on a Pocket Operator, as audio.", t_send)
-    tutorial("smileyface", "Sync with Smileyface", "Drumlab is the clock, Smileyface follows. Two FM-1s, one tempo.", t_smiley)
+    tutorial("sync", "Sync your FM-1s", "Chipbox, Smileyface and Drumlab over Bluetooth: one leads, the others follow. Tempo, kicks, patterns, effects, key.", t_smiley)
     # the patterns page
     d = Doc("../")
     d.img_dir = "../"
@@ -446,7 +457,7 @@ def tutorials():
     items = [("first-beat/", "Your first beat", "A house beat on the device, step by step. Start here."),
              ("make-a-kit/", "Make a kit", "Roll a kit, keep it, tweak a sound."),
              ("send-po32/", "Send to a PO-32", "Sounds and patterns over a cable."),
-             ("smileyface/", "Sync with Smileyface", "Drumlab sends the clock, Smileyface follows."),
+             ("sync/", "Sync your FM-1s", "One leads over Bluetooth, the others follow."),
              ("patterns/", "Drum patterns", "%d grooves to write in: four on the floor, boom bap, trap, and more." % len(PATTERNS))]
     d = Doc("")
     for i, (href, t, s) in enumerate(items, 1):
@@ -472,7 +483,7 @@ CONTROLS = [
     ("KNOB 4", "Morph. Step held: its morph", "Setting 4", "", "morph"),
     ("OCT-", "", "", "", ""),
     ("OCT+", "Copy the pattern to the next", "Kits", "", "kits"),
-    ("FX", "Hold: effects. Tap: latch", "", "", "effects"),
+    ("FX", "Tap: effects", "", "", "effects"),
     ("SEL", "Chain", "Patch A / B", "", "chain"),
     ("ENV", "Accent", "", "", "accent"),
     ("LFO", "Undo", "", "", "undo"),
@@ -524,7 +535,7 @@ def cheat_panel():
 def cheatsheet():
     rows = "".join("<tr><th>%s</th>%s</tr>" % (n, "".join("<td>%s</td>" % (html.escape(v) or '<span class="none">·</span>') for v in (a, b, c))) for n, a, b, c, _ in CONTROLS)
     wins = "".join("<tr><th>%s</th><td>%s</td></tr>" % (html.escape(a), html.escape(b)) for a, b in WINDOWS)
-    pads = "".join('<span class="pad p%d">%s</span>' % (i % 4, n) for i, n in enumerate(FX))
+    pads = "".join('<span class="pad p%d">%s</span>' % (i % 4, n) for i, n in enumerate(FX1))
     css = '''<style>
   main { max-width:1100px; }
   .panel { width:100%; height:auto; display:block; margin:6px 0 18px; }
@@ -565,7 +576,7 @@ def cheatsheet():
   <div class="cheat">
   <h2>Windows</h2>
   <div class="tables"><table><tbody>{wins}</tbody></table></div>
-  <h2>FX pads (hold FX)</h2>
+  <h2>FX pads (tap FX)</h2>
   <div class="pads">{pads}</div>
   </div>
 '''

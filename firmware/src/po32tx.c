@@ -56,7 +56,11 @@ int po32tx_pattern(po32tx_t *t, int num, const uint8_t trig[4][16], const uint8_
     put(t, (uint8_t)num);
     for (l = 0; l < 4; l++) {
         for (s = 0; s < 16; s++) put(t, trig[l][s]);
-        for (s = 0; s < 16; s++) { put(t, lock[l][s][0]); put(t, lock[l][s][1]); }
+        for (s = 0; s < 16; s++) {                                      /* a step's pitch and morph; libpo's default for a played step is 80 01, and a morph of 0 is not sent */
+            uint8_t a = lock[l][s][0], m = lock[l][s][1];
+            if ((trig[l][s] & 15u) && !m) m = 1;
+            put(t, a); put(t, m);
+        }
     }
     for (i = 0; i < 16; i++) put(t, 0);
     put(t, (uint8_t)accent); put(t, (uint8_t)(accent >> 8));
@@ -69,7 +73,7 @@ int po32tx_state(po32tx_t *t, const uint8_t knob[16][2], int tempo, int swing12,
     int i;
     if (n > 64 || t->len + 35 + n + 5 + 5 > PO32TX_MAX) return 0;
     put(t, 0x5A); put(t, 0x50); put(t, (uint8_t)(35 + n));
-    for (i = 0; i < 16; i++) { put(t, knob[i][0]); put(t, knob[i][1]); }
+    for (i = 0; i < 16; i++) { put(t, knob[i][0]); put(t, knob[i][1] ? knob[i][1] : 1u); }          /* (libpo's default pair is 80 01: no 0 morph) */
     put(t, (uint8_t)tempo); put(t, (uint8_t)swing12); put(t, (uint8_t)n);
     for (i = 0; i < n; i++) put(t, chain[i]);
     trailer(t);

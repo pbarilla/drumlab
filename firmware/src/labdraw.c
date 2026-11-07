@@ -513,13 +513,14 @@ static void draw_chain(void)                                        /* the chain
 }
 static void draw_fx(void)                                          /* the 16 punch-in effects on the 16 keys */
 {
+    static const char *const P1[16] = {"STOP", "REPEAT", "LPF", "HPF", "ECHO", "REVERB", "CRUSH", "GATE", "HALF", "DIST", "P-LFO", "BEND", "GRAIN", "REVRSE", "FM", "LATCH"};
     uint32_t s;
     cv_rect(0, 44, 240, 172, SK.bg);
     for (s = 0; s < 16u; s++) {
         int32_t x = 3 + (int32_t)(s & 3u) * 59, y = 47 + (int32_t)(s >> 2) * 42;
-        uint32_t hot = fx_mask >> s & 1u;
+        uint32_t hot = s < 8u ? (uint32_t)(bfx_local >> s & 1u) : s == 15u ? (uint32_t)(fx_lamp & 1u) : (uint32_t)(fx_mask >> FX_PAD1[s - 8u] & 1u);
         rrect_o(x, y, 57, 39, 5, hot ? K_CREAM : K_CHRD, hot ? K_AMB : K_PLATE);
-        txtc(x + 28, y + 11, FX_NAME[s], hot ? SK.bg : SK.text);
+        txtc(x + 28, y + 11, P1[s], hot ? SK.bg : SK.text);
     }
 }
 static void pat_body(void)
@@ -935,27 +936,48 @@ static void draw_kits(void)
 }
 
 /* the system menu (GLO + HOME) */
+/* the Bluetooth page: the same words on all three brothers */
+static void draw_bt(void)
+{
+    static const char *const MODE[3] = {"OFF", "LEAD", "FOLLOW"};
+    static const char *const STAT[3][3] = {{"OFF", "OFF", "OFF"}, {"READY", "READY", "LEADING"}, {"SEARCHING", "LINKED", "IN SYNC"}};
+    static const char *const ON[2] = {"OFF", "ON"};
+    const char *lab[6] = {"SYNC", "STATUS", "SIDECHAIN", "PATTERNS", "PUNCH-IN FX", "DEMO"}, *val[6];
+    uint32_t i;
+    val[0] = MODE[brothers_mode % 3u]; val[1] = STAT[brothers_mode % 3u][brothers_link() % 3u]; val[2] = ON[bt_side & 1u]; val[3] = ON[bt_patsync & 1u]; val[4] = ON[bt_fxsync & 1u]; val[5] = bt_locked ? "LOCKED" : "LOAD";
+    cv_rect(0, 44, 240, 172, SK.bg);
+    for (i = 0; i < 6u; i++) {
+        int32_t y = 48 + (int32_t)i * 28;
+        uint32_t row = i == 0u ? 0u : i == 1u ? 9u : i - 1u, on = row == bt_sel;                      /* the status line is only shown */
+        rrect_o(8, y, 224, 25, 5, on ? K_CREAM : K_CHRD, on ? RGB(58, 52, 74) : K_PLATE);
+        txt(20, y + 6, lab[i], on ? K_CREAM : RGB(200, 194, 170));
+        txt(206 - text_w(&FONT_S, val[i]), y + 6, val[i], row == 9u ? RGB(160, 154, 134) : K_AMB);
+        if (on) { txt(206 - text_w(&FONT_S, val[i]) - 14, y + 6, "<", K_CORAL); txt(212, y + 6, ">", K_CORAL); }
+    }
+}
 static void draw_menu(void)
 {
-    static const char *const LAB[NMENU] = {"MIDI CLOCK", "MIDI CHANNEL", "LESSONS", "BATTERY", "FACTORY RESET", "ABOUT"};
+    if (bt_on) { draw_bt(); return; }
+    static const char *const LAB[NMENU] = {"MIDI CLOCK", "MIDI CHANNEL", "LESSONS", "BATTERY", "FACTORY RESET", "BLUETOOTH", "ABOUT"};
     static const char *const SYNC[3] = {"OFF", "SEND", "FOLLOW"};
     uint32_t i;
     cv_rect(0, 44, 240, 172, SK.bg);
     for (i = 0; i < NMENU; i++) {
-        int32_t y = 50 + (int32_t)i * 27;
+        int32_t y = 48 + (int32_t)i * 24;
         char v[20], *e = v;
         uint32_t on = i == menu_sel;
-        rrect_o(8, y, 224, 24, 5, on ? K_CREAM : K_CHRD, on ? RGB(58, 52, 74) : K_PLATE);
-        txt(20, y + 4, LAB[i], on ? K_CREAM : RGB(200, 194, 170));
+        rrect_o(8, y, 224, 22, 5, on ? K_CREAM : K_CHRD, on ? RGB(58, 52, 74) : K_PLATE);
+        txt(20, y + 3, LAB[i], on ? K_CREAM : RGB(200, 194, 170));
         v[0] = 0;
         if (i == 0u) { const char *t = SYNC[lset.sync]; while (*t) *e++ = *t++; *e = 0; }
         else if (i == 1u) { if (!lset.chan) { e[0] = 'A'; e[1] = 'N'; e[2] = 'Y'; e[3] = 0; } else numu(e, lset.chan); }
         else if (i == 2u) { const char *t = lessons[les_pick].name; while (*t) *e++ = *t++; *e = 0; }
         else if (i == 3u) { e = numu(e, bat_pct); *e++ = '%'; *e = 0; }
         else if (i == 4u) { if (on) { e[0] = 'O'; e[1] = 'C'; e[2] = 'T'; e[3] = '+'; e[4] = 0; } }
+        else if (i == 5u) { if (on) { e[0] = 'O'; e[1] = 'C'; e[2] = 'T'; e[3] = '+'; e[4] = 0; } }
         else { const char *t = "FM-1_032"; while (*t) *e++ = *t++; *e = 0; }
-        txt((i == 0u || i == 1u ? 206 : 220) - text_w(&FONT_S, v), y + 4, v, i == 5u ? RGB(160, 154, 134) : K_AMB);
-        if (on && (i == 0u || i == 1u)) { txt(206 - text_w(&FONT_S, v) - 14, y + 4, "<", K_CORAL); txt(212, y + 4, ">", K_CORAL); }
+        txt((i == 0u || i == 1u ? 206 : 220) - text_w(&FONT_S, v), y + 3, v, i == 6u ? RGB(160, 154, 134) : K_AMB);
+        if (on && (i == 0u || i == 1u)) { txt(206 - text_w(&FONT_S, v) - 14, y + 3, "<", K_CORAL); txt(212, y + 3, ">", K_CORAL); }
     }
     if (about_on) {
         rrect_o(20, 56, 200, 150, 6, K_AMB, SK.bg);

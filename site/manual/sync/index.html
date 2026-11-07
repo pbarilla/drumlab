@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sync your FM-1s · Drumlab</title>
+<meta name="description" content="">
+<link rel="stylesheet" href="../../lab.css">
+</head>
+<body>
+<main>
+  <div class="mast"><svg class="atom" viewBox="-50 -50 100 100" width="76" height="76" aria-hidden="true"><g fill="none" stroke="#6edcb9" stroke-width="2.2"><ellipse rx="44" ry="15" transform="rotate(0)"/><ellipse rx="44" ry="15" transform="rotate(60)"/><ellipse rx="44" ry="15" transform="rotate(120)"/></g><g transform="rotate(0)"><circle r="3.8" fill="#eee4c6"><animateMotion dur="3.1s" repeatCount="indefinite" path="M44,0 A44,15 0 1,1 -44,0 A44,15 0 1,1 44,0"/></circle></g><g transform="rotate(60)"><circle r="3.8" fill="#ffa03c"><animateMotion dur="4.3s" repeatCount="indefinite" path="M44,0 A44,15 0 1,0 -44,0 A44,15 0 1,0 44,0"/></circle></g><g transform="rotate(120)"><circle r="3.8" fill="#eee4c6"><animateMotion dur="5.2s" repeatCount="indefinite" path="M44,0 A44,15 0 1,1 -44,0 A44,15 0 1,1 44,0"/></circle></g><circle r="11" fill="#f06446" stroke="#eee4c6" stroke-width="2"/></svg><h1><a href="../../">Drumlab</a> <span class="tag">TUTORIAL</span></h1></div>
+  
+  <nav class="dial" aria-label="Pages"><a href="../.././">Home</a><a href="../../play/">Play</a><a href="../../install.html">Install</a><a href="../../guide/">Manual</a><a href="../../manual/" aria-current="page">Tutorials</a><a href="../../cheatsheet/">Cheat sheet</a><a href="../../projects/">Projects</a></nav>
+  <p class="intro">Chipbox, Smileyface and Drumlab over Bluetooth: one leads, the others follow. Tempo, kicks, patterns, effects, key.</p>
+
+  <section class="step">
+    <h2><b>1</b>Pick the leader</h2>
+    <div class="item"><div class="t"><div>Hit <code>GLO</code> + <code>HOME</code> for the menu, pick BLUETOOTH and hit <code>OCT+</code>.</div></div></div>
+    <div class="item"><div class="t"><div>On the leader, set SYNC to LEAD. On the others, set it to FOLLOW. <code>OCT+</code> changes it.</div></div></div>
+    <div class="item"><div class="t"><div>Any of Drumlab, Chipbox and Smileyface can lead. One at a time.</div></div></div>
+    <div class="item"><div class="t"><div>STATUS says SEARCHING while a follower looks, LINKED when it hears the leader, and IN SYNC when it plays along.</div></div></div>
+  </section>
+
+  <section class="step">
+    <h2><b>2</b>Play</h2>
+    <div class="item"><div class="t"><div>Hit <code>PLAY</code> on the leader. The followers start at the next bar and take its tempo.</div></div></div>
+    <div class="item"><div class="t"><div>Change the leader's tempo and they follow. <code>PLAY</code> on the leader stops them all.</div></div></div>
+    <div class="item"><div class="t"><div>No cables and no pairing. Keep them in the same room.</div></div></div>
+  </section>
+
+  <section class="step">
+    <h2><b>3</b>What else comes along</h2>
+    <div class="item"><div class="t"><div>SIDECHAIN: the leader says where its kicks are. The followers duck on each one and swell back, so the bass pumps against the beat. Drumlab sends its first lane.</div></div></div>
+    <div class="item"><div class="t"><div>PATTERNS: when the leader changes pattern, the followers change at the end of their loop. Its swing comes along too.</div></div></div>
+    <div class="item"><div class="t"><div>PUNCH-IN FX: hold one of pads 1 to 8 on page 1 of the effects layer on the leader and the followers do it too: STOP, REPEAT, LPF, HPF, ECHO, REVERB, CRUSH and GATE. Pads 9 to 15 are different on each FM-1 and don't travel.</div></div></div>
+    <div class="item"><div class="t"><div>KEY: Chipbox and Smileyface work out the key of what they play. A following one moves its notes to the leader's key. Drumlab has no notes, so it has no KEY row.</div></div></div>
+  </section>
+
+  <section class="step">
+    <h2><b>4</b>The demo</h2>
+    <div class="item"><div class="t"><div>DEMO loads a locked project: D minor, 124 BPM. Load it on each brother, make one the leader, and hit <code>PLAY</code>.</div></div></div>
+    <div class="item"><div class="t"><div>Nothing in it is saved. Open any project to leave it.</div></div></div>
+  </section>
+
+  <section class="step">
+    <h2><b>5</b>Or use MIDI clock</h2>
+    <div class="item"><div class="t"><div>MIDI CLOCK in the menu sends or follows the standard MIDI clock over USB. Use it with a DAW or another box.</div></div></div>
+    <div class="item"><div class="t"><div>Plug the FM-1s into your computer and route the leader's MIDI out to each follower's MIDI in. Pass only the clock, start and stop.</div></div></div>
+    <div class="item"><div class="t"><div>Before you install a new firmware, set SYNC to OFF. While the radio runs, the FM-1 can stop answering the installer.</div></div></div>
+  </section>
+
+  <footer>GPL-3.0-only, see <a href="https://github.com/pbarilla/drumlab/blob/main/LICENSING.md">LICENSING.md</a>. Built on <a href="../../../chipbox/">Chipbox</a>, which is built on <a href="https://github.com/zvenson/dinghy">Dinghy</a>, which is built on <a href="https://github.com/hugelton/Felucca">Felucca</a> by Leo Kuroshita (Hügelton Instruments) with the changes of <a href="https://github.com/isod89/sloop-fm1">SLOOP</a> (isod89). PO-32 and Pocket Operator belong to Teenage Engineering, who have nothing to do with this.</footer>
+</main>
+<script src="../../lab.js"></script>
+</body>
+</html>

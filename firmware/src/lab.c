@@ -36,6 +36,33 @@ static uint32_t fm1_ticks(void) { return 0; }
 #include "drum.c"
 #include "po32tx.c"
 #include "kit_lab1.h"
+#ifdef FELUCCA_ID                                            /* firmware/ble/ble.c: the brothers' Bluetooth link, its own unit */
+extern volatile uint8_t brothers_mode;                      /* 0 off, 1 lead, 2 follow */
+extern void brothers_set(uint32_t mode);
+extern void brothers_poll(void);
+extern uint32_t brothers_link(void);
+extern void brothers_lead_tick(uint32_t off, uint32_t per);
+extern uint32_t brothers_bpm(void);
+extern void brothers_lead_set(uint32_t pat, uint32_t kick, uint32_t fx, uint32_t scale, uint32_t swing);
+extern uint32_t brothers_pat(void);
+extern uint32_t brothers_fx(void);
+extern uint32_t brothers_swing(void);
+extern uint32_t brothers_duck(uint32_t depth);
+extern void brothers_lead_run(uint32_t run);
+#else
+static uint8_t brothers_mode;
+static void brothers_set(uint32_t mode) { brothers_mode = (uint8_t)mode; }
+static void brothers_poll(void) {}
+static uint32_t brothers_link(void) { return 0; }
+static void brothers_lead_tick(uint32_t off, uint32_t per) { (void)off; (void)per; }
+static uint32_t brothers_bpm(void) { return 0; }
+static void brothers_lead_set(uint32_t pat, uint32_t kick, uint32_t fx, uint32_t scale, uint32_t swing) { (void)pat; (void)kick; (void)fx; (void)scale; (void)swing; }
+static uint32_t brothers_pat(void) { return 0xFFu; }
+static uint32_t brothers_fx(void) { return 0u; }
+static uint32_t brothers_swing(void) { return 0u; }
+static uint32_t brothers_duck(uint32_t depth) { (void)depth; return 256u; }
+static void brothers_lead_run(uint32_t run) { (void)run; }
+#endif
 #include "labcore.c"
 #include "labgen.c"
 #include "labproj.c"
@@ -56,7 +83,8 @@ static int send_build(void)
         po32tx_pattern(&tx, (int)p, pat[p].trig, (const uint8_t (*)[16][2])lk, pat[p].acc);
     }
     for (i = 0; i < NS; i++) { st[i][0] = knob[i][0]; st[i][1] = knob[i][1]; }
-    po32tx_state(&tx, st, bpm, swing, chain, chain_n);
+    if (chain_n) po32tx_state(&tx, st, bpm, swing, chain, chain_n);
+    else { uint8_t one = cur_pat; po32tx_state(&tx, st, bpm, swing, &one, 1); }                   /* no chain: the pattern on show loops (a pack always has one entry or more) */
     return po32tx_finish(&tx);
 }
 static void send_start(void)
@@ -116,6 +144,11 @@ static void app_main(void)
     }
 #endif
     for (;;) {
+        { static uint32_t paused;                                                                                                        /* the installer is talking: the Bluetooth radio goes quiet (it makes the FM-1 miss requests), and comes back 20 s after */
+          if (ota_hit_ms && brothers_mode && !paused) { paused = brothers_mode; brothers_set(0); }
+          if (paused && fm1_ms - ota_hit_ms > 20000u) { brothers_set(paused); paused = 0; ota_hit_ms = 0; } }
+        if (ota_back) { ota_back = 0; dirty = 1; }                                                      /* the installer gave up and left its message on the screen: paint it all again */
+        { static uint8_t bt_booted; if (!bt_booted && fm1_ms > 1500u) { bt_booted = 1; if (lset.flags & 3u) brothers_set(lset.flags & 3u); } }          /* the Bluetooth sync mode the player left it in */
         uint32_t keys, kdown, kup, b, bdown, bup, k;
         uint8_t st, d1, d2;
         platform_poll();
@@ -131,12 +164,13 @@ static void app_main(void)
             if ((st & 0xF0u) == 0x90u && d2 && d1 < 16u) pad_hit(d1, 0);
             if ((st & 0xF0u) == 0x90u && d2 && d1 >= 36u && d1 < 52u) pad_hit(d1 - 36u, d2 > 110u);       /* a drum machine's notes: 36 up */
             if ((st & 0xF0u) == 0xB0u && d1 == 102u) { if (d2 >= 64u) seq_play(); else seq_stop(); }
+            if ((st & 0xF0u) == 0xB0u && d1 == 119u) { seq_stop(); bt_demo_load(); bt_on = 0; menu_on = 0; view = V_PAT; wr = 1; chainm = 0; pg = 0; sel = 0; pv_dirty = 1; dirty = 1; }       /* test: the Bluetooth demo */
             if ((st & 0xF0u) == 0xB0u && d1 == 103u) tempo_set(d2 * 2u);
             if ((st & 0xF0u) == 0xB0u && d1 == 104u && d2 == 1u) send_start();
             if ((st & 0xF0u) == 0xB0u && d1 == 106u) { view = (uint8_t)((d2 & 3u) % NVIEW); pg = (uint8_t)((d2 >> 2) % 6u); help_on = pick_on = send_ask = 0; dirty = 1; pv_dirty = 1; pv_t = fm1_ms; }      /* test: jump to a view (+ 4 x page) */
             if ((st & 0xF0u) == 0xB0u && d1 == 107u) { send_ask = d2 ? 1u : 0u; dirty = 1; }                                   /* test: the send window */
         }
-        if (sync_mode == 2u && fol_on && sq_run && sq_len) { uint32_t nb = (uint32_t)(((uint64_t)661500u * 256u) / sq_len); nb = nb < 30u ? 30u : nb > 255u ? 255u : nb; if (nb != bpm) { bpm = (uint8_t)nb; dsec |= SEC_HDR | SEC_CTRL; } }
+        if ((sync_mode == 2u || brothers_mode == 2u) && fol_on && sq_run && sq_len) { uint32_t nb = (uint32_t)(((uint64_t)661500u * 256u) / sq_len); nb = nb < 30u ? 30u : nb > 255u ? 255u : nb; if (nb != bpm) { bpm = (uint8_t)nb; dsec |= SEC_HDR | SEC_CTRL; } }
         { static uint8_t fo; if (fo != fol_on) { fo = fol_on; dsec |= SEC_HDR; } }
         if (fm1_ms - draw_ms >= 33u) { uint32_t d0 = fm1_ms; draw_ms = fm1_ms; ui_draw(); if (fm1_ms - d0 > draw_max) draw_max = fm1_ms - d0; }
         if (fm1_ms - led_ms >= 30u) { led_ms = fm1_ms; ui_leds(); }
