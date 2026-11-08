@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: GPL-3.0-only */
 /* Drumlab's look: a 1950s atomic lab. Everything that decides how it looks is in this file; the logic (labui.c) never draws.
  *   PATTERN  dark: toggle switches, four sheets of dot-matrix paper, a seek head, aircraft dials, a radio dial for tabs
- *   SOUND    light: needle meters, lamp selectors, a CRT or a chart recorder for the sound's loudness
+ *   LAB      light: needle meters, lamp selectors, a CRT or a chart recorder for the sound's loudness
  *   SEND     a CRT monitor
  * The screen is painted in three bands of 96 rows (the canvas is at most 240 x 96); coordinates are screen coordinates (cv_ox, cv_oy shift them).
  * A full repaint happens only when something changed; the atom, the seek head and the key map are small blits. */
@@ -262,12 +262,12 @@ static uint8_t tg_prev[8], tg_t[8] = {6, 6, 6, 6, 6, 6, 6, 6}, tg_view = 9;     
 static const int16_t BOUNCE[7] = {0, 52, 108, 94, 103, 99, 100};                  /* how far the lever has gone (percent): it overshoots and settles */
 
 /* ---- the atom: three tilted orbits, an electron on each at its own speed and direction, behind the nucleus when it passes it */
-static int32_t atom_cx = 23, atom_cy = 20, atom_k = 1, atom_pulse;           /* where it is, how big, and a beat of the nucleus */
+static int32_t atom_cx = 23, atom_cy = 20, atom_k = 1, atom_pulse, atom_z;   /* where it is, how big (atom_z, in eighths, when it is not 0: the power-on zoom), and a beat of the nucleus */
 static void atom(uint32_t n, uint16_t hdr, uint16_t orb, uint32_t t)
 {
     static const uint32_t TILT[3] = {0u, 0x2AAAAAABu, 0x55555555u};
     uint32_t o, k;
-    int32_t cx = atom_cx, cy = atom_cy, x, y, K = atom_k, A = 19 * K, Bm = 7 * K, R = 11 * K + atom_pulse;
+    int32_t cx = atom_cx, cy = atom_cy, x, y, Z = atom_z ? atom_z : 8 * atom_k, K = (Z + 4) / 8, A = 19 * Z / 8, Bm = 7 * Z / 8, R = 11 * Z / 8 + atom_pulse;
     char b[4];
     for (o = 0; o < 3u; o++) {
         int32_t lx = 0, ly = 0;
@@ -292,7 +292,7 @@ static void atom(uint32_t n, uint16_t hdr, uint16_t orb, uint32_t t)
         int64_t ex = ((int64_t)A * cosq(ph)) >> 30, ey = ((int64_t)Bm * sinq(ph)) >> 30;
         x = cx + (int32_t)((ex * cosq(TILT[o]) - ey * sinq(TILT[o])) >> 30);
         y = cy + (int32_t)((ex * sinq(TILT[o]) + ey * cosq(TILT[o])) >> 30);
-        if ((x - cx) * (x - cx) + (y - cy) * (y - cy) > (13 * K) * (13 * K)) { fcirc(x, y, 1 + K, orb); cv_rect(x - 1, y - 1, 1, 1, K_CREAM); }
+        if ((x - cx) * (x - cx) + (y - cy) * (y - cy) > (13 * Z / 8) * (13 * Z / 8)) { fcirc(x, y, 1 + K, orb); cv_rect(x - 1, y - 1, 1, 1, K_CREAM); }
     }
 }
 static uint32_t atom_n(void) { return pick_on ? (uint32_t)pick_sel + 1u : view == V_SND ? sel + 1u : view == V_SEND ? 32u : (uint32_t)cur_pat + 1u; }
@@ -373,7 +373,7 @@ static void draw_header(void)
 }
 static void draw_tabs(void)                                         /* a radio dial: the red needle is the view */
 {
-    static const char *const T[3] = {"PAT", "SND", "SEND"};
+    static const char *const T[3] = {"PTN", "LAB", "SEND"};
     uint32_t i;
     int32_t k;
     uint16_t hi, lo, bgc;
@@ -563,7 +563,7 @@ static void pat_ctrl(void)
     }
 }
 
-/* ---- SOUND ---- */
+/* ---- LAB ---- */
 static void param_text(char *b, uint32_t idx, uint32_t v)
 {
     if (idx == 1u || idx == 8u || idx == 15u) {                       /* a frequency: 20 Hz * 1000 ^ x */
@@ -885,6 +885,7 @@ static void draw_pick(void)
         for (l = 0; l < 4u; l++)
             for (c = 0; c < 16u; c++)
                 if (rows[l] >> c & 1u) cv_rect(x + 23 + (int32_t)c * 3, y + 4 + (int32_t)l * 8, 2, 6, INKC[l]);
+        if (s == 0u && demo0) { cv_rect(x + 7, y + 25, 9, 6, K_BG); frame(x + 9, y + 20, 5, 6, K_BG); }      /* KOROBEINIKI: a padlock */
         for (c = 0; c < 8u; c++) cv_rect(x + 3 + (int32_t)c * 3 + 0, y + 29, 1, 1, RGB(140, 130, 100));
         for (c = 0; c < 4u; c++) { fcirc(x + 70, y + 7 + (int32_t)c * 8, 1, K_BG); }
     }
@@ -1003,6 +1004,7 @@ static void draw_help(void)
     cv_rect(0, 44, 240, 172, SK.bg);
     cv_rect(3, 46, 234, 16, shade(SK.amber, 90)); dframe(3, 46, 234, 16, SK.amber);
     txt(10, 46, "HELP", SK.hot);
+    if (n > 8u) txt(228 - tw("SELECT  Scroll", 1), 46, "SELECT  Scroll", SK.text);
     for (i = 0; i < 8u && help_top + i < n; i++) {
         int32_t y = 68 + (int32_t)i * 18;
         txt(10, y, h[help_top + i].k, SK.amber);

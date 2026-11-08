@@ -6,29 +6,20 @@
 <title>Drumlab</title>
 <meta name="description" content="A drum machine for the FM-1 that works like the PO-32 tonic and sends its sounds and patterns to one, as audio.">
 <link rel="stylesheet" href="lab.css">
+<link rel="stylesheet" href="css/boxes.css">
 </head>
 <body>
 <main>
   <div class="mast"><svg class="atom" viewBox="-50 -50 100 100" width="76" height="76" aria-hidden="true"><g fill="none" stroke="#6edcb9" stroke-width="2.2"><ellipse rx="44" ry="15" transform="rotate(0)"/><ellipse rx="44" ry="15" transform="rotate(60)"/><ellipse rx="44" ry="15" transform="rotate(120)"/></g><g transform="rotate(0)"><circle r="3.8" fill="#eee4c6"><animateMotion dur="3.1s" repeatCount="indefinite" path="M44,0 A44,15 0 1,1 -44,0 A44,15 0 1,1 44,0"/></circle></g><g transform="rotate(60)"><circle r="3.8" fill="#ffa03c"><animateMotion dur="4.3s" repeatCount="indefinite" path="M44,0 A44,15 0 1,0 -44,0 A44,15 0 1,0 44,0"/></circle></g><g transform="rotate(120)"><circle r="3.8" fill="#eee4c6"><animateMotion dur="5.2s" repeatCount="indefinite" path="M44,0 A44,15 0 1,1 -44,0 A44,15 0 1,1 44,0"/></circle></g><circle r="11" fill="#f06446" stroke="#eee4c6" stroke-width="2"/></svg><h1><a href="./">Drumlab</a></h1></div>
   
-  <nav class="dial" aria-label="Pages"><a href="./" aria-current="page">Home</a><a href="play/">Play</a><a href="install.html">Install</a><a href="guide/">Manual</a><a href="manual/">Tutorials</a><a href="cheatsheet/">Cheat sheet</a><a href="projects/">Projects</a></nav>
+  <nav class="dial" aria-label="Pages"><a href="./" aria-current="page">Home</a><a href="play/">Play</a><a href="install.html">Install</a><a href="guide/">Manual</a><a href="manual/">Tutorials</a><a href="cheatsheet/">Cheat sheet</a><a href="projects/">Projects</a><a href="https://github.com/pbarilla/drumlab">Source</a></nav>
 
   <p class="lead">A drum machine for the FM-1, built like the PO-32 tonic: 16 sounds, 16 patterns, 4 lanes. Make the beat here, then send it to a PO-32 as audio.</p>
   <p>No PO-32? It's still a drum machine.</p>
 
-  <div class="btns">
-    <a class="btn hot" href="install.html">Install</a>
-    <a class="btn alt" href="play/">Play online</a>
-    <a class="btn alt" href="manual/">Tutorials</a>
-    <a class="btn alt" href="guide/">Manual</a>
-    <a class="btn alt" href="projects/">Projects</a>
-    <a class="btn alt" href="cheatsheet/">Cheat sheet</a>
-    <a class="btn alt" id="download" href="#install">Download</a>
-    <a class="btn alt" id="source" href="#">Source</a>
-  </div>
 
   <div class="shots">
-    <figure><img src="img/playing.png" alt="The pattern view: four lanes of steps"><figcaption>PATTERN</figcaption></figure><figure><img src="img/snd.png" alt="The sound view: a scope and four dials"><figcaption>SOUND</figcaption></figure><figure><img src="img/send.png" alt="The send view: a green monitor"><figcaption>SEND</figcaption></figure>
+    <figure><img src="img/playing.png" alt="The pattern view: four lanes of steps"><figcaption>PATTERN</figcaption></figure><figure><img src="img/snd.png" alt="The lab view: a scope and four dials"><figcaption>LAB</figcaption></figure><figure><img src="img/send.png" alt="The send view: a green monitor"><figcaption>SEND</figcaption></figure>
   </div>
   <div class="shots">
     <figure><img src="img/kits.png" alt="The kits window"><figcaption>KITS</figcaption></figure><figure><img src="img/picker.png" alt="Twelve projects"><figcaption>PROJECTS</figcaption></figure><figure><img src="img/menu.png" alt="The menu"><figcaption>MENU</figcaption></figure>
@@ -38,7 +29,7 @@
   <p>A simple (to me) way to make drum machine beats, the way the PO-32 does it. Three views, and you'll spend your time in them:</p>
   <ul>
     <li><b>PATTERN</b> - 16 steps, 4 lanes. Write a beat, mute a lane, throw effects at it.</li>
-    <li><b>SOUND</b> - every sound has 21 settings. Turn the knobs, roll a whole new kit.</li>
+    <li><b>LAB</b> - every sound has 21 settings. Turn the knobs, roll a whole new kit.</li>
     <li><b>SEND</b> - plug a cable into a PO-32 and it hears all of it.</li>
   </ul>
 
@@ -46,21 +37,17 @@
   <ul>
     <li>Hold HOME, pick a NEW project, tap HOME to open it.</li>
     <li>Tap REC and press keys to write steps. PRESETS picks the sound. Hit PLAY.</li>
-    <li>Hit HOME to flip to SOUND. Turn ALGORITHM to flip pages, turn the knobs. Hit OCT+ to roll a kit.</li>
+    <li>Hit HOME to flip to LAB. Turn ALGORITHM to flip pages, turn the knobs. Hit OCT+ to roll a kit.</li>
     <li>Hit HOME until SEND is visible. Hit PLAY, then OCT+. The PO-32 does the rest.</li>
   </ul>
   <p>Never touched a drum machine? Hit GLO + HOME, pick LESSONS and play along with the rings.</p>
 
   <h2>The three brothers</h2>
-  <div class="bros">
-    <a class="bro" href="../chipbox/"><b>Chipbox</b><span>Chiptune tracker. Over 35 sound chips.</span></a>
-    <a class="bro" href="../smileyface/"><b>Smileyface</b><span>An acid bass line.</span></a>
-    <div class="bro me"><b>Drumlab</b><span>This one. Drums, and a PO-32.</span></div>
-  </div>
+  <div class="shelf" id="shelf"></div>
   <p style="margin-top:14px">They get along: over Bluetooth one of them leads and the others follow. Tempo, kicks, patterns and effects. <a href="manual/sync/">Here's how</a>.</p>
 
   <h2 id="install">Install</h2>
-  <p><a href="install.html">install it from your browser</a>.</p>
+  <p><a href="install.html">install it from your browser</a>, or <a id="download" href="#install">download the package</a>.</p>
 
   <h2>Tested?</h2>
   <ul><li>Yes, on a real FM-1. Not every corner has met a real PO-32 yet.</li></ul>
@@ -68,11 +55,12 @@
   <footer>GPL-3.0-only, see <a href="https://github.com/pbarilla/drumlab/blob/main/LICENSING.md">LICENSING.md</a>. Built on <a href="../chipbox/">Chipbox</a>, which is built on <a href="https://github.com/zvenson/dinghy">Dinghy</a>, which is built on <a href="https://github.com/hugelton/Felucca">Felucca</a> by Leo Kuroshita (Hügelton Instruments) with the changes of <a href="https://github.com/isod89/sloop-fm1">SLOOP</a> (isod89). PO-32 and Pocket Operator belong to Teenage Engineering, who have nothing to do with this.</footer>
 </main>
 <script src="lab.js"></script>
+<script>window.BRO_ME = "drumlab";</script>
+<script src="js/boxes.js"></script>
 <script>
   (function () {
     var base = 'https://github.com/pbarilla/drumlab';
     document.getElementById('download').href = base + '/releases/latest';
-    document.getElementById('source').href = base;
   })();
 </script>
 </body>

@@ -24,7 +24,7 @@ No PO-32? It's still a drum machine.
 
 ## Controls
 
-| | PATTERN | SOUND | SEND |
+| | PATTERN | LAB | SEND |
 | --- | --- | --- | --- |
 | `HOME` | next view, hold: projects | same | same |
 | `PRESETS` | sound | sound | |

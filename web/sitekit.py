@@ -12,7 +12,7 @@ try:
 except Exception:
     Image = None
 
-NAV = [("Home", ""), ("Play", "play/"), ("Install", "install.html"), ("Manual", "guide/"), ("Tutorials", "manual/"), ("Cheat sheet", "cheatsheet/"), ("Projects", "projects/")]
+NAV = [("Home", ""), ("Play", "play/"), ("Install", "install.html"), ("Manual", "guide/"), ("Tutorials", "manual/"), ("Cheat sheet", "cheatsheet/"), ("Projects", "projects/"), ("Source", None)]
 
 
 def atom(size=76):
@@ -38,6 +38,9 @@ def nav(prefix, active):
     out = []
     for name, href in NAV:
         cur = ' aria-current="page"' if name == active else ""
+        if href is None:                                            # the source code: the repository
+            out.append('<a href="%s">%s</a>' % (REPO, name))
+            continue
         out.append('<a href="%s%s"%s>%s</a>' % (prefix, href or "./", cur, name))
     return '<nav class="dial" aria-label="Pages">%s</nav>' % "".join(out)
 
@@ -49,8 +52,13 @@ def footer(prefix):
             'Teenage Engineering, who have nothing to do with this.</footer>' % (REPO, prefix))
 
 
-def page(title, body, depth, active, tag=None, sub=None, desc="", head="", scripts="", main_class=""):
+def page(title, body, depth, active, tag=None, sub=None, desc="", head="", scripts="", main_class="", exp=None):
     p = "../" * depth
+    nb = active in ("Tutorials", "Manual", "Install", "Projects", "Cheat sheet")      # every page but the cover and the device is a page from a lab notebook (notebook.css)
+    if nb:
+        head += '<link rel="stylesheet" href="%snotebook.css">\n' % p
+        body = '  <div class="sheet">\n%s%s%s  </div>' % (('  <span class="exp">Experiment %s</span>\n' % exp) if exp else "", body, '  <span class="stamp">Verified</span>\n' if exp else "")
+    bodycls = ' class="nb s%d%s"' % ((exp or sum(map(ord, title))) % 4, " corner" if active in ("Install", "Projects", "Cheat sheet") else "") if nb else ""
     t = (' <span class="tag">%s</span>' % tag) if tag else ""
     s = ('<p class="sub">%s</p>' % sub) if sub else ""
     return f'''<!doctype html>
@@ -62,7 +70,7 @@ def page(title, body, depth, active, tag=None, sub=None, desc="", head="", scrip
 <meta name="description" content="{desc}">
 <link rel="stylesheet" href="{p}lab.css">
 {head}</head>
-<body>
+<body{bodycls}>
 <main{(' class="%s"' % main_class) if main_class else ""}>
   <div class="mast">{atom()}<h1><a href="{p or './'}">Drumlab</a>{t}</h1></div>
   {s}

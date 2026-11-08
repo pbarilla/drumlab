@@ -25,7 +25,8 @@ static int disc_of(uint32_t idx) { return idx == 0 ? 0 : idx == 4 ? 1 : idx == 7
 typedef struct { const char *k, *f; } hl_t;
 static const hl_t HELP_PAT[] = {
     {"KEYS", "Pads  Steps"}, {"PRESETS", "Sound"}, {"SELECT", "Pattern"}, {"PLAY", "Play  Stop"}, {"REC", "Write"}, {"REC hold", "Punch in  Lock"},
-    {"ENV", "Accent"}, {"ARP", "Mute  Solo"}, {"SEL", "Chain"}, {"FX hold", "Effects"}, {"FX tap", "Latch"}, {"EDIT hold", "Clear"}, {"LFO", "Undo"}, {"OCT+", "Copy"},
+    {"ENV", "Accent"}, {"ARP", "Mute  Solo"}, {"SEL", "Chain"}, {"SEL > EDIT", "Chain undo  clear"}, {"FX tap", "Pads on  off"}, {"FX hold", "Pads while held"},
+    {"FX KEYS", "16 pads"}, {"FX pad 16", "Latch"}, {"REC + FX", "Record pads 9-15"}, {"EDIT hold", "Clear"}, {"LFO", "Undo"}, {"OCT+", "Copy to next"},
     {"KNOB 1", "Tempo"}, {"KNOB 2", "Swing"}, {"KNOB 3", "Pitch"}, {"KNOB 4", "Morph"}, {"SAVE", "Save"}, {"HOME", "View"}, {"HOME hold", "Projects"},
     {"GLO + HOME", "Menu"},
 };
@@ -33,8 +34,8 @@ static const hl_t HELP_SND[] = {
     {"KEYS", "Hear"}, {"PRESETS", "Sound"}, {"ALGORITHM", "Page"}, {"KNOBS", "Settings"}, {"SEL", "Patch A  B"}, {"PLAY", "Loop"}, {"OCT+", "Kits"},
     {"EDIT hold", "Fine"}, {"SAVE", "Save"}, {"HOME", "View"}, {"HOME hold", "Projects"}, {"GLO + HOME", "Menu"},
 };
-static const hl_t HELP_SEND[] = {{"PLAY", "Send  Stop"}, {"HOME", "View"}, {"HOME hold", "Projects"}, {"GLO + HOME", "Menu"}};
-static const hl_t HELP_PICK[] = {{"SELECT", "Choose"}, {"HOME", "Open"}, {"HOME hold", "Close"}, {"EDIT hold", "Delete"}};
+static const hl_t HELP_SEND[] = {{"PLAY", "Send  Stop"}, {"KEYS", "Pads"}, {"KNOBS", "Tempo  Swing  Pitch  Morph"}, {"HOME", "View"}, {"HOME hold", "Projects"}, {"GLO + HOME", "Menu"}};
+static const hl_t HELP_PICK[] = {{"SELECT", "Choose"}, {"HOME", "Open"}, {"HOME hold", "Close"}, {"EDIT hold", "Delete"}, {"GLO + HOME", "Menu"}};
 
 /* ---- state */
 #define NMENU 7
@@ -356,7 +357,7 @@ static void ui_input(uint32_t keys, uint32_t kdown, uint32_t kup, uint32_t b, ui
         if (pick_aud && fm1_ms - pick_t > 140u) { pick_aud = 0; pick_show(pick_sel); }
         if (pick_i < 8u && fm1_ms >= pick_next) { static const uint8_t AS[8] = {0, 2, 1, 2, 0, 2, 1, 3}; pad_hit(AS[pick_i++], 0); pick_next = fm1_ms + 125u; }
         if (bdown >> BTN_EDIT & 1u) { edit_t0 = fm1_ms; edit_used = 0; }
-        if ((b >> BTN_EDIT & 1u) && !edit_used && !del_ask && fm1_ms - edit_t0 > 600u && lab_exists(pick_sel)) { edit_used = 1; del_ask = 1; dirty = 1; }
+        if ((b >> BTN_EDIT & 1u) && !edit_used && !del_ask && fm1_ms - edit_t0 > 600u && lab_exists(pick_sel) && !(pick_sel == 0u && demo0)) { edit_used = 1; del_ask = 1; dirty = 1; }
         if (del_ask && (bdown >> BTN_OCT_UP & 1u)) {
             lab_clear(pick_sel);
             if (pick_sel == lab_slot) { core_init(); lab_dirty = 0; }
@@ -370,7 +371,7 @@ static void ui_input(uint32_t keys, uint32_t kdown, uint32_t kup, uint32_t b, ui
 
     if (bdown >> BTN_PLAY & 1u) {
         if (view == V_SEND) { if (sending) sending = 0; else { send_ask = 1; ask_t = fm1_ms; } }
-        else if (view == V_SND) { aud_loop ^= 1u; aud_next = fm1_ms; }                  /* SOUND: PLAY loops the sound, to tweak it while it repeats */
+        else if (view == V_SND) { aud_loop ^= 1u; aud_next = fm1_ms; }                  /* LAB: PLAY loops the sound, to tweak it while it repeats */
         else if (sq_run) seq_stop(); else seq_play();
     }
     if (bdown >> BTN_REC & 1u) { rec_t0 = fm1_ms; rec_used = 0; }                       /* REC: a tap is WRITE; held while playing, the keys punch in */
@@ -385,7 +386,7 @@ static void ui_input(uint32_t keys, uint32_t kdown, uint32_t kup, uint32_t b, ui
     if ((bdown >> BTN_OCT_UP & 1u) && view == V_SND) kit_open();
     if ((bdown >> BTN_OCT_UP & 1u) && view == V_PAT && !fx_layer) { uint32_t nx = (cur_pat + 1u) & 15u; pat_edit(); pat[nx] = pat[cur_pat]; cur_pat = (uint8_t)nx; }
     if (bdown >> BTN_EDIT & 1u) { edit_t0 = fm1_ms; edit_used = 0; }
-    fine = view == V_SND && (b >> BTN_EDIT & 1u);                                       /* SOUND: EDIT held = fine knobs */
+    fine = view == V_SND && (b >> BTN_EDIT & 1u);                                       /* LAB: EDIT held = fine knobs */
     if ((b >> BTN_EDIT & 1u) && view == V_PAT && !edit_used && fm1_ms - edit_t0 > 600u) {          /* hold: the pattern is cleared (the chain too in chain mode) */
         edit_used = 1;
         if (chainm) chain_n = 0; else { pat_edit(); memset(&pat[cur_pat], 0, sizeof pat[cur_pat]); }

@@ -1,0 +1,98 @@
+/* SPDX-License-Identifier: GPL-3.0-only */
+/* The tutorials are pages from a lab notebook: graph paper on the dark desk, a margin line, spiral holes,
+   photos taped in, a coffee ring or two. Loaded only on the tutorial pages (sitekit.page, body.nb). */
+@font-face { font-family:"Special Elite"; src:url(fonts/SpecialElite-Regular.ttf) format("truetype"); font-display:swap; }
+@font-face { font-family:"Caveat"; src:url(fonts/Caveat.ttf) format("truetype"); font-weight:400 700; font-display:swap; }
+body.nb {
+  --paper:#efe6cb; --paper2:#e7dcbb; --pink:#d9604a; --ink2:#23202c; --pencil:#4d4960; --grid:#3f8f86;
+  --type:"Special Elite", "American Typewriter", "Courier New", monospace; --hand:"Caveat", "Bradley Hand", "Segoe Print", cursive;
+}
+body.nb .sheet { position:relative; margin:8px 0 34px; padding:44px 40px 60px 96px; color:var(--ink2); isolation:isolate;
+  background-color:var(--paper);
+  background-image:
+    linear-gradient(90deg, transparent 70px, #d9604a 70px, #d9604a 72px, transparent 72px, transparent 76px, #d9604a66 76px, #d9604a66 77px, transparent 77px),
+    linear-gradient(#3f8f8633 1px, transparent 1px), linear-gradient(90deg, #3f8f8633 1px, transparent 1px),
+    linear-gradient(#3f8f8618 1px, transparent 1px), linear-gradient(90deg, #3f8f8618 1px, transparent 1px),
+    radial-gradient(ellipse at 20% 0%, #fff8e2aa, transparent 60%), radial-gradient(ellipse at 100% 100%, #b8975a33, transparent 55%);
+  background-size:auto, 28px 28px, 28px 28px, 7px 7px, 7px 7px, auto, auto;
+  border-radius:3px 3px 6px 3px; box-shadow:0 1px 0 #fff8 inset, 0 24px 40px #000a, 0 3px 0 #b8a67a, 0 6px 0 #d7c9a0, 0 9px 0 #b8a67a; }
+/* the spiral holes */
+body.nb .sheet::before { content:""; position:absolute; left:16px; top:18px; bottom:18px; width:26px; z-index:1; pointer-events:none;
+  background:radial-gradient(circle at 50% 50%, #1a1822 0 8px, #0006 9px, transparent 11px) 0 0/26px 44px repeat-y; }
+/* the coffee */
+body.nb .sheet::after { content:""; position:absolute; z-index:3; pointer-events:none; mix-blend-mode:multiply; background:center/contain no-repeat; }
+body.nb.s0 .sheet::after { background-image:url(img/stain/a.svg); width:250px; height:250px; right:-26px; top:90px; transform:rotate(12deg); }
+body.nb.s1 .sheet::after { background-image:url(img/stain/b.svg); width:290px; height:290px; left:120px; bottom:-60px; transform:rotate(-8deg); }
+body.nb.s2 .sheet::after { background-image:url(img/stain/c.svg); width:270px; height:270px; right:30px; top:46%; transform:rotate(25deg); }
+body.nb.s3 .sheet::after { background-image:url(img/stain/a.svg); width:200px; height:200px; right:60px; bottom:30px; transform:rotate(-30deg); opacity:.85; }
+
+/* the notebook's own head: an experiment number in pencil, a stamp when it is done */
+body.nb .exp { position:absolute; right:44px; top:22px; font:700 26px/1 var(--hand); color:var(--pencil); transform:rotate(-3deg); }
+body.nb .stamp { position:absolute; z-index:4; right:52px; bottom:48px; padding:6px 16px 4px; font:400 22px/1 var(--type); letter-spacing:.14em; color:var(--pink); border:3px solid var(--pink); border-radius:6px; transform:rotate(-9deg); opacity:.78; mix-blend-mode:multiply; }
+body.nb .sheet > .intro { color:var(--pencil); font:400 24px/1.25 var(--hand); margin:0 0 30px; max-width:30em; }
+body.nb .step { border-top:0; padding:26px 0 14px; }
+body.nb .step + .step { border-top:1px dashed #23202c33; }
+body.nb .step h2 { color:var(--ink2); font:400 22px/1.25 var(--type); letter-spacing:.01em; text-transform:none; gap:12px; margin:0 0 12px; }
+body.nb .step h2 b { background:transparent; color:var(--pencil); border:2.5px solid var(--pencil); border-radius:46% 54% 50% 50% / 54% 46% 56% 44%; min-width:38px; height:38px; font:700 24px/1 var(--hand); transform:rotate(-4deg); }
+body.nb .step h2 a { color:var(--ink2); text-decoration-color:var(--pink); text-decoration-thickness:2px; }
+body.nb .step h2 a:hover { color:var(--pink); }
+body.nb .step h2::before { content:none; }
+body.nb .t { color:var(--ink2); }
+body.nb .block { color:var(--ink2); }
+body.nb .sheet { --line:#23202c33; --dim:#5d5970; --cream:#23202c; --ink:#23202c; --mint:#1f6b63; }
+body.nb .sheet h3 { font:400 19px/1.3 var(--type); color:var(--ink2); letter-spacing:0; }
+body.nb .sheet table th { color:var(--pencil); font-family:var(--type); font-weight:400; border-bottom:2px solid #23202c55; }
+body.nb .sheet table td { border-bottom:1px solid #23202c22; }
+body.nb .sheet .toc a, body.nb .sheet p.toc a { color:#1f6b63; }
+body.nb .sheet .row { background:#fffaea; border:1px solid #23202c33; box-shadow:0 2px 0 #23202c22; color:var(--ink2); }
+body.nb .sheet .row small, body.nb .sheet small { color:var(--pencil); }
+body.nb .sheet button, body.nb .sheet .btn { background:#d9604a; color:#fff; border:2px solid #23202c; border-radius:6px; font:400 15px var(--type); box-shadow:0 3px 0 #23202c; }
+body.nb .sheet progress { accent-color:#d9604a; }
+body.nb .sheet footer { color:var(--pencil); border-top:1px dashed #23202c44; }
+body.nb .dim { color:var(--pencil); }
+body.nb .sheet b, body.nb .sheet strong { color:inherit; }
+body.nb .sheet a { color:#1f6b63; }
+body.nb .sheet a:hover { color:var(--pink); }
+body.nb .sheet code { background:#fffaea; color:var(--ink2); border:1.5px solid var(--ink2); border-bottom-width:3px; border-radius:5px; padding:0 6px; }
+/* photos, taped in */
+body.nb .pic { position:relative; margin:16px 0 8px 18px; max-width:600px; }
+body.nb .pic img { display:block; border:9px solid #fffaf0; border-bottom-width:14px; border-radius:2px; background:#fffaf0; box-shadow:0 6px 14px #0005, 0 1px 0 #0003; transform:rotate(-.5deg); }
+body.nb .item:nth-of-type(even) .pic img { transform:rotate(.45deg); }
+body.nb .pic::before, body.nb .pic::after { content:""; position:absolute; top:-8px; width:62px; height:20px; z-index:2; background:#f0e29ccc; box-shadow:0 1px 2px #0003; }
+body.nb .pic::before { left:14px; transform:rotate(-7deg); clip-path:polygon(0 0,100% 0,97% 25%,100% 50%,97% 75%,100% 100%,0 100%,3% 75%,0 50%,3% 25%); }
+body.nb .pic::after { right:14px; transform:rotate(6deg); clip-path:polygon(0 0,100% 0,97% 25%,100% 50%,97% 75%,100% 100%,0 100%,3% 75%,0 50%,3% 25%); }
+/* short or busy pages: the ring sits in the bottom corner, off the controls */
+body.nb.corner .sheet::after { left:auto; top:auto; right:-34px; bottom:-48px; width:210px; height:210px; transform:rotate(18deg); }
+
+/* the written-out pattern: kept as a dark plate, stuck on */
+body.nb .gridwrap { background:#1f1d29; padding:12px 12px 8px; border-radius:6px; box-shadow:0 6px 14px #0005; transform:rotate(.3deg); }
+body.nb pre { background:#fffaea; color:var(--ink2); border:1px solid #23202c33; }
+body.nb .gridwrap .h { color:#9a96a8; }
+/* the footer and the rest of the page keep the desk's colours */
+@media (max-width:760px) {
+  body.nb .sheet { padding:34px 16px 50px 54px; background-size:auto, 28px 28px, 28px 28px, 7px 7px, 7px 7px, auto, auto; }
+  body.nb .sheet { background-image:
+    linear-gradient(90deg, transparent 38px, #d9604a 38px, #d9604a 40px, transparent 40px),
+    linear-gradient(#3f8f8633 1px, transparent 1px), linear-gradient(90deg, #3f8f8633 1px, transparent 1px), linear-gradient(#3f8f8618 1px, transparent 1px), linear-gradient(90deg, #3f8f8618 1px, transparent 1px), radial-gradient(ellipse at 20% 0%, #fff8e2aa, transparent 60%), radial-gradient(ellipse at 100% 100%, #b8975a33, transparent 55%); }
+  body.nb .sheet::before { left:6px; width:20px; }
+  body.nb .exp { right:16px; top:12px; font-size:20px; }
+  body.nb .stamp { right:16px; bottom:20px; font-size:16px; }
+  body.nb .pic { margin-left:0; }
+  body.nb.s0 .sheet::after, body.nb.s2 .sheet::after { width:170px; height:170px; }
+}
+@media (prefers-reduced-motion:no-preference) { body.nb .stamp { animation:stampin .5s cubic-bezier(.2,1.4,.4,1) 0s 1 both; } }
+@keyframes stampin { from { transform:rotate(-9deg) scale(1.9); opacity:0; } to { transform:rotate(-9deg) scale(1); opacity:.78; } }
+
+/* the cheat sheet's table: typed on its own plain sheet, taped on, so the graph paper does not run through the rows */
+body.nb .sheet table { background:#fbf6e6; border-collapse:collapse; box-shadow:0 6px 14px #0004, 0 0 0 1px #23202c33; margin-top:18px; }
+body.nb .sheet table th, body.nb .sheet table td { padding:7px 12px; }
+body.nb .sheet table tr:last-child td { border-bottom:0; }
+
+/* the manual's contents: index tabs, written by hand */
+body.nb .sheet .toc { gap:8px 10px; margin:0 0 26px; }
+body.nb .sheet .toc a { display:inline-block; padding:1px 11px 0; font:400 19px/1.25 var(--hand); color:var(--ink2); text-decoration:none; background:#fffaea; border:1.5px solid var(--ink2); border-bottom-width:3px; border-radius:7px 7px 2px 2px; transform:rotate(-1.2deg); }
+body.nb .sheet .toc a:nth-child(even) { transform:rotate(1deg); background:#f6edc9; }
+body.nb .sheet .toc a:nth-child(3n) { transform:rotate(-.4deg); }
+body.nb .sheet .toc a:hover { color:var(--pink); border-color:var(--pink); }
+.step { scroll-margin-top:18px; }
+@media (prefers-reduced-motion:no-preference) { html { scroll-behavior:smooth; } }

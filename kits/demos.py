@@ -16,6 +16,11 @@ def pat(hits, acc=()):
 
 # the demo projects: name, kit index (0 = LAB-1, 1.. = the recipes), bpm, swing, patterns (up to 4), chain
 DEMOS = [
+ ("KOROBEINIKI", 9, 144, 0, [                       # slot 1, locked: under Chipbox's demo 1 (the same tune, key and tempo): a verse bar, a fill, a lift
+    pat({0: [0, 8, 10], 1: [4, 12], 2: [0, 2, 4, 6, 8, 10, 12, 14]}, acc=[4, 12]),
+    pat({0: [0, 8, 10], 1: [4, 12, 14, 15], 2: [0, 2, 4, 6, 8, 10], 3: [12]}, acc=[4, 12, 15]),
+    pat({0: [0, 4, 8, 12], 1: [4, 12], 2: [2, 6, 10, 14], 3: [7, 15]}, acc=[4, 12]),
+  ], [0, 0, 0, 1, 2, 2, 0, 1]),
  ("HOUSE", 2, 124, 0, [
     pat({0: [0, 4, 8, 12], 1: [4, 12], 2: [2, 6, 10, 14], 4: [], 3: []}, acc=[4, 12]),
     pat({0: [0, 4, 8, 12], 1: [4, 12], 2: [2, 6, 10, 14, 15], 5: [7, 15], 3: [3, 11]}, acc=[4, 12]),

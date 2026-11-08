@@ -42,10 +42,30 @@ static void bt_demo_load(void)
     chain_n = 0; cur_pat = 0; swing = 0; tempo_set(124);
     bt_locked = 1; lab_dirty = 0;
 }
-static void demo_install(void)                                      /* the demos into the empty slots */
+/* slot 1 (index 0) is KOROBEINIKI, the beat for Chipbox's demo 1: locked, and made again whenever it is not exactly what this firmware makes.
+ * A project of the player's that sat there (an older firmware's first demo, say) moves to the last free slot. */
+static void demo_sync0(void)
+{
+    lab_hdr_t h;
+    int b;
+    uint32_t len, f;
+    demo_load(&demos[0]); len = lab_pack(lab_buf);
+    b = lab_newest(0, &h);
+    if (b >= 0 && (h.seq & 0x40000000u) && h.len == len && h.crc == lab_crc(lab_buf, len)) { demo0 = 1; return; }
+    if (b >= 0 && !(h.seq & 0x40000000u)) {
+        for (f = LAB_SLOTS - 1u; f > 0u && lab_exists(f); f--) {}
+        if (f == 0u) { demo0 = 0; return; }                              /* no room: it stays where it is, unlocked */
+        if (pf_read(lab_base(0, (uint32_t)b) + LAB_HDR, lab_buf, h.len) == 0 && lab_crc(lab_buf, h.len) == h.crc) lab_store(f, lab_buf, h.len);
+        demo_load(&demos[0]); len = lab_pack(lab_buf);
+    }
+    lab_seqflag = 0x40000000u; lab_store(0, lab_buf, len); lab_seqflag = 0;
+    demo0 = 1;
+}
+static void demo_install(void)                                      /* KOROBEINIKI, and the other demos into the empty slots */
 {
     uint32_t i;
-    for (i = 0; i < NDEMO && i < LAB_SLOTS; i++) if (!lab_exists(i)) { demo_load(&demos[i]); lab_save(i); }
+    demo_sync0();
+    for (i = 1; i < NDEMO && i < LAB_SLOTS; i++) if (!lab_exists(i)) { demo_load(&demos[i]); lab_save(i); }
     core_init(); lab_dirty = 0;
 }
 

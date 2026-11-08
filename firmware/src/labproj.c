@@ -12,6 +12,8 @@
 static uint8_t lab_buf[PROJ_BANK];
 static uint32_t lab_dirty, lab_t_edit, lab_loaded;
 static uint8_t lab_slot;                        /* the open project */
+static uint8_t demo0;                           /* slot 1 (index 0) holds KOROBEINIKI: locked, never saved over */
+static uint32_t lab_seqflag;                    /* 0x40000000 while the demo is written: its header says so */
 typedef struct { uint32_t magic, seq, len, crc; } lab_hdr_t;
 
 static uint32_t lab_crc(const uint8_t *p, uint32_t n)
@@ -61,7 +63,7 @@ static int lab_newest(uint32_t slot, lab_hdr_t *h)
 {
     lab_hdr_t a, b;
     int ha = lab_header(slot, 0, &a), hb = lab_header(slot, 1, &b);
-    if (ha && hb) { if ((int32_t)(b.seq - a.seq) > 0) { *h = b; return 1; } *h = a; return 0; }
+    if (ha && hb) { if ((int32_t)((b.seq & 0x3FFFFFFFu) - (a.seq & 0x3FFFFFFFu)) > 0) { *h = b; return 1; } *h = a; return 0; }
     if (ha) { *h = a; return 0; }
     if (hb) { *h = b; return 1; }
     return -1;
@@ -86,14 +88,14 @@ static int lab_store(uint32_t slot, const uint8_t *buf, uint32_t len)     /* a p
     sectors = (LAB_HDR + len + 0xFFFu) / 0x1000u;
     for (i = 0; i < sectors; i++) if (pf_erase(base + i * 0x1000u)) return -1;
     if (pf_write(base + LAB_HDR, buf, len)) return -1;
-    nh.magic = LAB_MAGIC; nh.seq = b < 0 ? 1u : h.seq + 1u; nh.len = len; nh.crc = lab_crc(buf, len);
+    nh.magic = LAB_MAGIC; nh.seq = (b < 0 ? 1u : ((h.seq & 0x3FFFFFFFu) + 1u) & 0x3FFFFFFFu) | lab_seqflag; nh.len = len; nh.crc = lab_crc(buf, len);
     if (pf_write(base, &nh, sizeof nh)) return -1;
     return 0;
 }
 static uint8_t bt_locked;                /* the Bluetooth demo is on: a locked project, in memory only (nothing of it is saved; opening a project ends it) */
 static int lab_save(uint32_t slot)       /* stopped and silent: an erase stalls the sound */
 {
-    if (bt_locked) return 0;
+    if (bt_locked || (slot == 0u && demo0)) return 0;           /* the Bluetooth demo and KOROBEINIKI are never saved */
     return lab_store(slot, lab_buf, lab_pack(lab_buf));
 }
 static void lab_clear(uint32_t slot) { pf_erase(lab_base(slot, 0)); pf_erase(lab_base(slot, 1)); }
@@ -120,12 +122,14 @@ typedef struct { uint8_t magic, slot, sync, chan, flags, pad[3]; } lset_t;
 static lset_t lset = {LSET_MAGIC, 0, 0, 0, 0, {0, 0, 0}};      /* sync: 0 off, 1 send clock, 2 follow clock; chan: 0 any, 1..16 */
 static void lab_slot_note(void) { lset.slot = lab_slot; settings_save(&lset, sizeof lset); }            /* which project was open: it opens again next time */
 static void demo_install(void);
+static void demo_sync0(void);
 static void proj_boot(void)
 {
     lset_t t;
     int fresh = 1;
     if (settings_load(&t, sizeof t) == 0 && t.magic == LSET_MAGIC && t.slot < LAB_SLOTS && t.sync < 3u && t.chan < 17u) { lset = t; fresh = 0; }
     if (fresh) { demo_install(); settings_save(&lset, sizeof lset); }                  /* a new device: the demos go into the empty slots */
+    else demo_sync0();                                                                  /* slot 1 is always KOROBEINIKI: made again if it is not exactly this firmware's */
     lab_slot = lset.slot; sync_mode = lset.sync;
     bt_side = lset.flags >> 2 & 1u; bt_patsync = lset.flags >> 3 & 1u; bt_fxsync = lset.flags >> 4 & 1u;            /* Bluetooth sync: bits 0-1 the mode, 2 sidechain, 3 follow patterns */
     lab_loaded = lab_load(lab_slot) == 0;

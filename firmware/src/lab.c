@@ -3,7 +3,7 @@
  *
  * PATTERN view
  *   16 white keys     the 4 x 4 grid: sounds 1-16 (the pads), or the 16 steps while WRITE is on
- *   PRESETS           the sound (1-16)         SELECT   the pattern (1-16)          HOME   tap: next view (PATTERN, SOUND, SEND); hold: projects
+ *   PRESETS           the sound (1-16)         SELECT   the pattern (1-16)          HOME   tap: next view (PATTERN, LAB, SEND); hold: projects
  *   KNOB 1 / 2        tempo / swing            KNOB 3 / 4   pitch (A) / morph (B) of the sound; with a step held in WRITE: that step's
  *   REC               tap: WRITE; held while playing: the keys punch in, KNOBS 3 / 4 write into the steps as they pass
  *   ENV               ACCENT (keys set accents)    ARP   MUTE, then SOLO (keys pick their column)    LFO   undo
@@ -12,7 +12,7 @@
  *                     into the steps as they pass; FX held with no key clears them
  *   EDIT hold         clear the pattern (the chain, in chain mode)      OCT+   copy the pattern to the next
  *   PLAY              play / stop              SAVE   save      GLO   help      MASTER   volume
- * SOUND view          ALGORITHM = page, KNOBS 1-4 = its four parameters; the sound plays when a turn settles; the keys play the edited patch
+ * LAB view            ALGORITHM = page, KNOBS 1-4 = its four parameters; the sound plays when a turn settles; the keys play the edited patch
  *                     SEL = patch A / B       EDIT held = fine knobs       PLAY = loop the sound       OCT+ = the kits window (roll a kit, LAB-1, the preset kits; OCT+ keep, OCT- discard)
  * SEND view           PLAY asks first (OCT+ Yes), then sends the whole pack to a PO-32 as audio; PLAY again stops
  * GLO + HOME          the menu: MIDI clock (off / send / follow), MIDI channel, lessons, battery, factory reset, about
@@ -132,23 +132,23 @@ static void app_main(void)
             platform_poll();
             cv_begin(240, 124, K_BG);
             cv_ox = 0; cv_oy = -50;
-            atom_cx = 120; atom_cy = 100; atom_k = el < 300u ? 1 : el < 700u ? 2 : 3; atom_pulse = el > 900u && el < 1000u ? 3 : 0;
-            atom(0, K_BG, K_MINT, el * (el > 1100u ? 3u : 9u) / 2u);
+            atom_cx = 120; atom_cy = 100; atom_pulse = el > 900u && el < 1000u ? 3 : 0;
+            { uint32_t u = el > 900u ? 256u : el * 256u / 900u; atom_z = (int32_t)(8u + (16u * (u * u * (768u - 2u * u) >> 16)) / 256u); }      /* a smooth zoom, 1x to 3x (smoothstep) */
+            atom(0, K_BG, K_MINT, el < 1100u ? el * 9u / 2u : 4950u + (el - 1100u) * 3u / 2u);             /* (the spin slows down without a jump) */
             if (el > 900u) { uint32_t n = (el - 900u) / 90u; char nm[8] = "DRUMLAB"; if (n > 7u) n = 7u; nm[n] = 0; cv_text(120 - text_w(&FONT_L, "DRUMLAB") / 2, 124, &FONT_L, nm, K_CREAM); }
             cv_oy = 0;
             cv_blit(0, 40);
-            { uint32_t w = fm1_ms; while (fm1_ms - w < 40u) platform_poll(); }
+            { uint32_t w = fm1_ms; while (fm1_ms - w < 16u) platform_poll(); }
         }
-        atom_cx = 23; atom_cy = 20; atom_k = 1; atom_pulse = 0;
+        atom_cx = 23; atom_cy = 20; atom_k = 1; atom_pulse = 0; atom_z = 0;
         lcd_fill(0, 0, 240, 240, C_BLACK);
     }
 #endif
     for (;;) {
-        { static uint32_t paused;                                                                                                        /* the installer is talking: the Bluetooth radio goes quiet (it makes the FM-1 miss requests), and comes back 20 s after */
+        { static uint32_t paused;                                                                                                       /* the installer is talking: the Bluetooth radio goes quiet (it makes the FM-1 miss requests), and comes back 20 s after */
           if (ota_hit_ms && brothers_mode && !paused) { paused = brothers_mode; brothers_set(0); }
           if (paused && fm1_ms - ota_hit_ms > 20000u) { brothers_set(paused); paused = 0; ota_hit_ms = 0; } }
         if (ota_back) { ota_back = 0; dirty = 1; }                                                      /* the installer gave up and left its message on the screen: paint it all again */
-        { static uint8_t bt_booted; if (!bt_booted && fm1_ms > 1500u) { bt_booted = 1; if (lset.flags & 3u) brothers_set(lset.flags & 3u); } }          /* the Bluetooth sync mode the player left it in */
         uint32_t keys, kdown, kup, b, bdown, bup, k;
         uint8_t st, d1, d2;
         platform_poll();
@@ -158,7 +158,9 @@ static void app_main(void)
 #ifndef CHIPBOX_HOST
         if (px_open_req) { uint32_t os = px_open_req - 1u; px_open_req = 0; if (os < LAB_SLOTS) { help_on = menu_on = pick_on = kit_on = 0; if (les_on) les_exit(); lab_open(os); view = V_PAT; sel = 0; pv_dirty = 1; pv_t = fm1_ms; dirty = 1; } }
 #endif
-        while (midi_get(&st, &d1, &d2)) {
+        { uint32_t nm = 0;
+        while (nm < 64u && midi_get(&st, &d1, &d2)) {                      /* a few a turn: a flood must not keep the loop from drawing, the heartbeat and the next turn (the host is NAKed while the ring is full) */
+            nm++;
             if (st < 0xF0u && lset.chan && (st & 0x0Fu) != (uint32_t)(lset.chan - 1u)) continue;                 /* another channel */
             if ((st & 0xF0u) == 0xC0u && d1 < 16u) { cur_pat = d1; dirty = 1; continue; }                           /* program change: the pattern */                        /* tests over USB-MIDI: note on d1 0..15 = a pad; CC 102 play / stop, CC 103 tempo / 2 */
             if ((st & 0xF0u) == 0x90u && d2 && d1 < 16u) pad_hit(d1, 0);
@@ -170,17 +172,18 @@ static void app_main(void)
             if ((st & 0xF0u) == 0xB0u && d1 == 106u) { view = (uint8_t)((d2 & 3u) % NVIEW); pg = (uint8_t)((d2 >> 2) % 6u); help_on = pick_on = send_ask = 0; dirty = 1; pv_dirty = 1; pv_t = fm1_ms; }      /* test: jump to a view (+ 4 x page) */
             if ((st & 0xF0u) == 0xB0u && d1 == 107u) { send_ask = d2 ? 1u : 0u; dirty = 1; }                                   /* test: the send window */
         }
+        }
         if ((sync_mode == 2u || brothers_mode == 2u) && fol_on && sq_run && sq_len) { uint32_t nb = (uint32_t)(((uint64_t)661500u * 256u) / sq_len); nb = nb < 30u ? 30u : nb > 255u ? 255u : nb; if (nb != bpm) { bpm = (uint8_t)nb; dsec |= SEC_HDR | SEC_CTRL; } }
         { static uint8_t fo; if (fo != fol_on) { fo = fol_on; dsec |= SEC_HDR; } }
         if (fm1_ms - draw_ms >= 33u) { uint32_t d0 = fm1_ms; draw_ms = fm1_ms; ui_draw(); if (fm1_ms - d0 > draw_max) draw_max = fm1_ms - d0; }
         if (fm1_ms - led_ms >= 30u) { led_ms = fm1_ms; ui_leds(); }
-        if (fm1_ms - cc_ms >= 500u) {                             /* CC 100 = the worst audio block in % (since the last), CC 101 = the playing step | 16 playing */
+        if (fm1_ms - cc_ms >= 500u) {                             /* CC 100 = the worst audio block in % (since the last), CC 101 = the playing step | 16 playing, CC 105 = the slowest screen redraw (ms), CC 108 / 109 = the battery reading / 8, % 8 */
             uint32_t w = cpu_max / (58u * FM1_TICKS_PER_US);
             cpu_max = 0; cc_ms = fm1_ms;
             midi_send(0xB0, 100, w > 127u ? 127u : w);
             midi_send(0xB0, 101, (sq_run ? 16u : 0u) | cur_step());
             midi_send(0xB0, 105, draw_max > 127u ? 127u : draw_max); draw_max = 0;
-            midi_send(0xB0, 108, bat_raw / 8u > 127u ? 127u : bat_raw / 8u); midi_send(0xB0, 109, bat_raw % 8u);                     /* the slowest screen redraw, ms */
+            midi_send(0xB0, 108, bat_raw / 8u > 127u ? 127u : bat_raw / 8u); midi_send(0xB0, 109, bat_raw % 8u);
         }
         (void)k;
     }

@@ -12,7 +12,16 @@ from patterns import PATTERNS, by_name
 FW_PLAY = os.path.join(ROOT, "..", "fw", "site", "play", "index.html")
 
 
+# footers the author reworded by hand on two pages (kept here so a regenerate does not undo them)
+FOOT = {
+    "guide/index.html": '<footer>GPL-3.0-only, see <a href="https://github.com/pbarilla/drumlab/blob/main/LICENSING.md">LICENSING.md</a>. Built on <a href="../../chipbox/">Chipbox</a>, which is built on <a href="https://github.com/zvenson/dinghy">Dinghy</a>, which is built on <a href="https://github.com/hugelton/Felucca">Felucca</a> by Leo Kuroshita (Hügelton Instruments) with the changes of <a href="https://github.com/isod89/sloop-fm1">SLOOP</a> (isod89). PO-32, PO-35, and Pocket Operator belong to Teenage Engineering. Microtonic belongs to Sonic Charge. They\'re not involved in this, and are likely unaware of it. But hey, if you work there and are reading this: Hi!</footer>',
+    "manual/send-po32/index.html": '<footer>GPL-3.0-only, see <a href="https://github.com/pbarilla/drumlab/blob/main/LICENSING.md">LICENSING.md</a>. Built on <a href="../../../chipbox/">Chipbox</a>, which is built on <a href="https://github.com/zvenson/dinghy">Dinghy</a>, which is built on <a href="https://github.com/hugelton/Felucca">Felucca</a> by Leo Kuroshita (Hügelton Instruments) with the changes of <a href="https://github.com/isod89/sloop-fm1">SLOOP</a> (isod89). PO-32, PO-35 and Pocket Operator belong to Teenage Engineering, who have nothing to do with this. Sonic Charge owns Microtonic, and is not involved in this. Hope they dont get mad...</footer>',
+}
+
+
 def write(rel, text):
+    if rel in FOOT:
+        text = re.sub(r"<footer>.*?</footer>", lambda m: FOOT[rel], text, count=1, flags=re.S)
     p = os.path.join(SITE, rel)
     os.makedirs(os.path.dirname(p), exist_ok=True)
     open(p, "w").write(text)
@@ -47,19 +56,9 @@ def index():
   <p class="lead">A drum machine for the FM-1, built like the PO-32 tonic: 16 sounds, 16 patterns, 4 lanes. Make the beat here, then send it to a PO-32 as audio.</p>
   <p>No PO-32? It's still a drum machine.</p>
 
-  <div class="btns">
-    <a class="btn hot" href="install.html">Install</a>
-    <a class="btn alt" href="play/">Play online</a>
-    <a class="btn alt" href="manual/">Tutorials</a>
-    <a class="btn alt" href="guide/">Manual</a>
-    <a class="btn alt" href="projects/">Projects</a>
-    <a class="btn alt" href="cheatsheet/">Cheat sheet</a>
-    <a class="btn alt" id="download" href="#install">Download</a>
-    <a class="btn alt" id="source" href="#">Source</a>
-  </div>
 
   <div class="shots">
-    {shots([("playing", "The pattern view: four lanes of steps", "PATTERN"), ("snd", "The sound view: a scope and four dials", "SOUND"), ("send", "The send view: a green monitor", "SEND")])}
+    {shots([("playing", "The pattern view: four lanes of steps", "PATTERN"), ("snd", "The lab view: a scope and four dials", "LAB"), ("send", "The send view: a green monitor", "SEND")])}
   </div>
   <div class="shots">
     {shots([("kits", "The kits window", "KITS"), ("picker", "Twelve projects", "PROJECTS"), ("menu", "The menu", "MENU")])}
@@ -69,7 +68,7 @@ def index():
   <p>A simple (to me) way to make drum machine beats, the way the PO-32 does it. Three views, and you'll spend your time in them:</p>
   <ul>
     <li><b>PATTERN</b> - 16 steps, 4 lanes. Write a beat, mute a lane, throw effects at it.</li>
-    <li><b>SOUND</b> - every sound has 21 settings. Turn the knobs, roll a whole new kit.</li>
+    <li><b>LAB</b> - every sound has 21 settings. Turn the knobs, roll a whole new kit.</li>
     <li><b>SEND</b> - plug a cable into a PO-32 and it hears all of it.</li>
   </ul>
 
@@ -77,34 +76,31 @@ def index():
   <ul>
     <li>Hold HOME, pick a NEW project, tap HOME to open it.</li>
     <li>Tap REC and press keys to write steps. PRESETS picks the sound. Hit PLAY.</li>
-    <li>Hit HOME to flip to SOUND. Turn ALGORITHM to flip pages, turn the knobs. Hit OCT+ to roll a kit.</li>
+    <li>Hit HOME to flip to LAB. Turn ALGORITHM to flip pages, turn the knobs. Hit OCT+ to roll a kit.</li>
     <li>Hit HOME until SEND is visible. Hit PLAY, then OCT+. The PO-32 does the rest.</li>
   </ul>
   <p>Never touched a drum machine? Hit GLO + HOME, pick LESSONS and play along with the rings.</p>
 
   <h2>The three brothers</h2>
-  <div class="bros">
-    <a class="bro" href="../chipbox/"><b>Chipbox</b><span>Chiptune tracker. Over 35 sound chips.</span></a>
-    <a class="bro" href="../smileyface/"><b>Smileyface</b><span>An acid bass line.</span></a>
-    <div class="bro me"><b>Drumlab</b><span>This one. Drums, and a PO-32.</span></div>
-  </div>
+  <div class="shelf" id="shelf"></div>
   <p style="margin-top:14px">They get along: over Bluetooth one of them leads and the others follow. Tempo, kicks, patterns and effects. <a href="manual/sync/">Here's how</a>.</p>
 
   <h2 id="install">Install</h2>
-  <p><a href="install.html">install it from your browser</a>.</p>
+  <p><a href="install.html">install it from your browser</a>, or <a id="download" href="#install">download the package</a>.</p>
 
   <h2>Tested?</h2>
   <ul><li>Yes, on a real FM-1. Not every corner has met a real PO-32 yet.</li></ul>
 '''
-    scripts = '''<script>
+    scripts = '''<script>window.BRO_ME = "drumlab";</script>
+<script src="js/boxes.js"></script>
+<script>
   (function () {
     var base = %r;
     document.getElementById('download').href = base + '/releases/latest';
-    document.getElementById('source').href = base;
   })();
 </script>
 ''' % REPO
-    write("index.html", page("Drumlab", body, 0, "Home", desc="A drum machine for the FM-1 that works like the PO-32 tonic and sends its sounds and patterns to one, as audio.", scripts=scripts))
+    write("index.html", page("Drumlab", body, 0, "Home", desc="A drum machine for the FM-1 that works like the PO-32 tonic and sends its sounds and patterns to one, as audio.", scripts=scripts, head='<link rel="stylesheet" href="css/boxes.css">\n'))
 
 
 # ================================================================== install
@@ -208,8 +204,8 @@ def guide():
     d = Doc("../manual/")
     I = d.item
     d.section("The three views",
-        I("`HOME` flips between PATTERN, SOUND and SEND.", "g-home"),
-        I("PATTERN is where you write the beat, SOUND is where you shape the sounds and SEND puts it all on a PO-32."),
+        I("`HOME` flips between PATTERN, LAB and SEND.", "g-home"),
+        I("PATTERN is where you write the beat, LAB is where you shape the sounds, and SEND lets you push your masterpiece to a PO-32 or PO-35."),
         I("Hold `HOME` to open the projects."),
         I("`GLO` shows the help for the view you're on.", "g-help"),
         I("`GLO` + `HOME` opens the menu."),
@@ -219,35 +215,35 @@ def guide():
         d.block(pad_map()),
         I("The columns are the 4 lanes. A lane plays one sound at a time, so a new hit cuts the old one."),
         I("`PRESETS` picks a sound. The keys play them."),
-        I("Sounds 1 to 4 are a kick, a snare, a hat and a bell, tom or cowbell, in every kit."), id="sounds")
+        I("Sounds 1 to 4 are a kick, a snare, a hat, and then 'something else' in every kit. This is just a recommendation, feel free to break up the sounds however you like!"), id="sounds")
     d.section("Writing steps",
-        I("Tap `REC` to turn WRITE on. The 16 keys are the 16 steps.", "g-write"),
-        I("Pick a sound with `PRESETS`, then press the steps it plays on. Press a step again to take it away.", "g-steps"),
+        I("Tap `REC` to turn WRITE on. The 16 keys represent the 16 steps.", "g-write"),
+        I("Pick a sound with `PRESETS`, then press the steps it plays on. Press a step again to take it away. So far so good. Basically like every single drum machine ever made!", "g-steps"),
         I("A step holds one sound per lane. Writing another sound of the same lane replaces it."),
-        I("Hold `REC` while it plays and press the pads. The hits land on the step nearest the playhead."),
+        I("Hold `REC` while it plays and press the pads. The hits land on the step nearest the playhead. AKA live recording mode!"),
         I("`SELECT` picks the pattern, 1 to 16.", "g-pattern"),
-        I("`OCT+` copies the pattern to the next one and goes there."),
+        I("`OCT+` copies the pattern to the next one."),
         I("Hold `EDIT` to clear the pattern."),
-        I("`LFO` takes back the last change to the pattern. One step back, and no redo."),
-        I("It saves by itself three seconds after you stop editing, as long as nothing is playing.", "g-save"), id="steps")
+        I("`LFO` takes back the last change to the pattern. One step back, and no redo. Kind of like 1 chance!"),
+        I("Drumlab autosaves when it can, but if you really wanna be sure, then stop playing and dont touch anything for around 5 seconds!", "g-save"), id="steps")
     d.section("Accents",
-        I("`ENV` turns ACCENT on. Press a step to accent it, press it again to take it away.", "g-accent"),
-        I("An accent is on the step, so every lane's hit on it is louder."), id="accents")
+        I("`ENV` turns ACCENT on. Press a step to accent it, or...unaccent it? Is that the right word. Unaccent. Sounds weird.", "g-accent"),
+        I("An accent is on the step, so every lane's hit on it is louder. Be careful of those random cowbells!"), id="accents")
     d.section("Mute and solo",
         I("`ARP` once is MUTE, twice is SOLO, three times is off.", "g-mute"),
-        I("In either, a key picks its lane: keys 1, 5, 9 and 13 are lane 1, and so on.", "g-solo"), id="mute")
+        I("In either, a key picks its lane: keys 1, 5, 9 and 13 are lane 1, and so on. That's confusing isnt it? Just do 1,2,3,4. Whatever. I should probably review that...", "g-solo"), id="mute")
     d.section("Chain",
         I("`SEL` turns chain mode on. The keys add patterns 1 to 16 to the chain.", "g-chain"),
         I("Tap `EDIT` to take the last one off. Hold `EDIT` to clear the chain."),
-        I("With no chain, the pattern on show loops."),
-        I("A chain holds up to 64 patterns."), id="chain")
+        I("With no chain, the pattern on show loops. Which is kind of obvious when you think about it, huh. Like a chain of length 1. But hey, gotta write it here! Future generations, and all that..."),
+        I("A chain holds up to 64 patterns. That's alotta patterns!"), id="chain")
     d.section("Tempo and swing",
-        I("`KNOB 1` is the tempo, 60 to 240.", "g-tempo"),
+        I("`KNOB 1` is the tempo, 60 to 240. Why did I limit it to 60, you may ask? Oh, no reason... nothing to do with a minute having 60 seconds, and a second having 1000ms, and it being all nice and easy to figure out...", "g-tempo"),
         I("`KNOB 2` is the swing, 0 to 12.", "g-swing"), id="tempo")
     d.section("Pitch and morph",
         I("`KNOB 3` tunes the sound you picked and `KNOB 4` slides it from patch A to patch B.", "g-pm"),
         I("A step keeps the pitch and morph it was written with."),
-        I("To change one step, hold its key in WRITE and turn `KNOB 3` or `KNOB 4`. That's a step lock."),
+        I("To change one step, hold its key in WRITE and turn `KNOB 3` or `KNOB 4`. That's a step lock, baby!"),
         I("To change many, hold `REC` while it plays and turn the knobs. They write into the steps of the sound you picked as they pass."), id="locks")
     d.section("Effects",
         I("Tap `FX` and the 16 white keys become effects. Hold a key for its effect. Tap `FX` again to put them away. Or hold `FX` for the layer while you hold it.", "g-fx"),
@@ -256,7 +252,7 @@ def guide():
         I("Pads 9 to 15 only exist on Drumlab: HALF, DIST, P-LFO, BEND, GRAIN, REVRSE and FM. They are the PO-32's effects, so with WRITE on and the pattern playing, they are written into the steps as they pass."),
         I("Pad 16 is the LATCH. With it on, a tap holds a pad on and the next tap lets it go."),
         I("With WRITE on, hold `FX` and press nothing while it plays to wipe the effects from the steps as they pass."), id="fx")
-    d.section("The SOUND view",
+    d.section("The LAB view",
         I("`PRESETS` picks the sound.", "g-knobs"),
         I("`ALGORITHM` flips through six pages. The four knobs set what the page shows."),
         d.block(table(["Page", "KNOB 1", "KNOB 2", "KNOB 3", "KNOB 4"], [
@@ -275,22 +271,21 @@ def guide():
         I("`MORPH` in the FX layer plays every hit as patch B."), id="ab")
     kits = ", ".join("<code>%s</code>" % k for k in KITS)
     d.section("Kits",
-        I("In the SOUND view, `OCT+` opens the kits window. Every kit replaces all 16 sounds. Your patterns stay.", "g-kits"),
+        I("In the LAB view, `OCT+` opens the kits window. Every kit replaces all 16 sounds. Your patterns stay.", "g-kits"),
         I("`SELECT` or `PRESETS` walks the list: a rolled kit, LAB-1 and the preset kits. Each plays as you land on it, and the keys play its sounds.", "g-kitlist"),
         d.block("<p>Preset kits: %s.</p>" % kits),
         I("On the rolled kit, `PLAY` rolls another."),
         I("`OCT+` keeps the kit. `OCT-` puts the old one back."), id="kits")
-    d.section("Sending to a PO-32",
-        I("In the SEND view, `PLAY` asks first.", "g-send"),
+    d.section("Sending to a PO-32, PO-35, etc",
+        I("In the SEND view, hit the `PLAY` button. Now thank me later, but a warning appears.", "g-send"),
         I("`OCT+` sends all 16 sounds, A and B, the 16 patterns, the tempo, the swing and the chain.", "g-ask"),
-        I("`PLAY` stops it. `OCT-` puts the window away."),
-        I("The <a href=\"../manual/send-po32/\">tutorial</a> has the cables."), id="send")
+        I("The <a href=\"../manual/send-po32/\">tutorial</a> has more information!"), id="send")
     d.section("Projects",
         I("Hold `HOME` to open the projects. There are 12.", "g-picker"),
-        I("`SELECT` or `PRESETS` walks them. Each plays a few of its sounds as you land on it."),
-        I("`HOME` opens one. Hold `HOME` to close the list and stay where you were."),
-        I("Hold `EDIT` to delete one. `OCT+` says yes.", "g-delete"),
-        I("A new project starts from the LAB-1 kit."), id="projects")
+        I("`SELECT` or `PRESETS` to pick one!"),
+        I("`HOME` opens it. Hold `HOME` to close the list and stay where you were."),
+        I("Hold `EDIT` to delete the selected pattern.", "g-delete"),
+        I("A new project starts from the LAB-1 kit. Whats the LAB-1 kit? Oh... you know."), id="projects")
     d.section("The menu",
         I("`GLO` + `HOME` opens it. `SELECT` or `PRESETS` picks a row, `OCT+` and `OCT-` change it, `HOME` leaves.", "g-menu"),
         d.block(table(["Row", "What it does"], [
@@ -303,7 +298,7 @@ def guide():
         I("SEND makes Drumlab the clock: 24 pulses a quarter note, with start and stop. FOLLOW takes the tempo from the clock coming in.", "g-clock"), id="menu")
     les = ", ".join("<code>%s</code>" % n for n in LESSON_NAMES)
     d.section("Lessons",
-        I("A lesson shows a pattern as rings to play in. Press the steps the rings are on.", "l-start"),
+        I("A lesson shows a pattern as rings to play in. Press the steps the rings are on. Like guitar hero, but slower, not a guitar, and not very heroic. But it'll teach ya how to use Drumlab!", "l-start"),
         d.block("<p>%s.</p>" % les),
         I("`HOME` leaves. Your project comes back as it was."),
         I("When every ring is filled, `OCT+` starts the next lesson."), id="lessons")
@@ -327,18 +322,21 @@ def guide():
         I("Install and update with the <a href=\"../install.html\">install page</a>."),
         I("If your FM-1 is stuck, hold `OCT-` while you plug it in. The install page takes it from there."), id="rescue")
     toc = "".join('<a href="#%s">%s</a>' % t for t in [("views", "Views"), ("sounds", "Sounds"), ("steps", "Steps"), ("accents", "Accents"), ("mute", "Mute"), ("chain", "Chain"),
-                                                      ("tempo", "Tempo"), ("locks", "Locks"), ("fx", "Effects"), ("sound", "SOUND"), ("ab", "A and B"), ("kits", "Kits"),
+                                                      ("tempo", "Tempo"), ("locks", "Locks"), ("fx", "Effects"), ("sound", "LAB"), ("ab", "A and B"), ("kits", "Kits"),
                                                       ("send", "Send"), ("projects", "Projects"), ("menu", "Menu"), ("lessons", "Lessons"), ("midi", "MIDI"), ("backup", "Backup"), ("numbers", "Numbers"), ("rescue", "Rescue")])
     write("guide/index.html", page("Manual · Drumlab", '  <div class="toc">%s</div>\n\n%s\n' % (toc, d.html()), 1, "Manual", tag="MANUAL"))
 
 
 # ================================================================== the tutorials
+EXP = {"first-beat": 1, "make-a-kit": 2, "send-po32": 3, "sync": 4, "patterns": 5}
+
+
 def tutorial(slug, title, intro, build):
     d = Doc("../../manual/")
     d.img_dir = "../"
     build(d)
     body = '  <p class="intro">%s</p>\n\n%s\n' % (pills(intro), d.html())
-    write("manual/%s/index.html" % slug, page(title + " · Drumlab", body, 2, "Tutorials", tag="TUTORIAL"))
+    write("manual/%s/index.html" % slug, page(title + " · Drumlab", body, 2, "Tutorials", tag="TUTORIAL", exp=EXP.get(slug)))
 
 
 def t_first(d):
@@ -371,7 +369,7 @@ def t_first(d):
 def t_kit(d):
     I = d.item
     d.section("Roll a kit",
-        I("Tap `HOME` to open the SOUND view.", "k-home"),
+        I("Tap `HOME` to open the LAB view.", "k-home"),
         I("Hit `OCT+`. A kit rolls, and plays itself.", "k-octup"),
         I("Hit `PLAY` to roll the dice again. Keep going until you hear one you like. The keys play its sounds.", "k-roll"))
     d.section("Preset kits",
@@ -384,6 +382,7 @@ def t_kit(d):
         I("Turn `ALGORITHM` for the next page.", "k-algo"),
         I("Hit `SEL` for the sound's other patch. Every sound is two, A and B.", "k-sel"),
         I("Hit `PLAY` to loop the sound while you tweak.", "k-loop"))
+    d.sections.append('  <section class="step">\n    <h2><b>4.5</b>Ohh... now i get it!</h2>\n    <div class="item"><div class="t"><div>So I \'roll a kit\' like in step 1, and if it\'s close to what im thinking, I take it and edit it to make it my own. If it sucks I roll again. But I can always edit the crap out of anything and make it sound like I want! Got it!</div></div></div>\n  </section>')
     d.section("Hear it in the beat",
         I("Tap `HOME` twice to get back to PATTERN, then hit `PLAY`.", "k-again"))
 
@@ -391,15 +390,15 @@ def t_kit(d):
 def t_send(d):
     I = d.item
     d.section("Plug in",
-        I("Plug a cable from the FM-1's output into the PO-32's input. Turn `MASTER` up."),
+        I("Plug a cable from the FM-1's output into the PO-32 or PO-35's input. Turn `MASTER` up."),
         I("Get the PO-32 listening: <code class=\"po\">acc</code> + <code class=\"po\">sound</code>."))
     d.section("Send it",
         I("Tap `HOME` until you're in the SEND view.", "s-home"),
-        I("Hit `PLAY`. It asks first.", "s-play"),
-        I("Hit `OCT+`. All 16 sounds, all 16 patterns, the tempo and the swing go over.", "s-yes"),
-        I("`PLAY` stops it."))
+        I("Hit `PLAY`.", "s-play"),
+        I("Hit `OCT+`. All 16 sounds, all 16 patterns, the tempo and the swing go over. Maybe plug in a spare 3.5mm cable into the output of the Pocket Operator, cause it's LOUD!", "s-yes"),
+        I("`PLAY` stops it. But like, dont stop it, it'll corrupt whatever is on the Pocket Operator! Why did I even add the option to stop sending?"))
     d.section("Play it there",
-        I("Press <code class=\"po\">play</code> on the PO-32. That's your beat."))
+        I("Press <code class=\"po\">play</code> on the Pocket Operator. That's your beat."))
 
 
 def t_smiley(d):
@@ -442,8 +441,8 @@ def t_patterns(d):
 
 def tutorials():
     tutorial("first-beat", "Your first beat", "A house beat in about two minutes: kick, snare, hat. Start here.", t_first)
-    tutorial("make-a-kit", "Make a kit", "Roll a new kit, keep it, and bend a sound of it. Carry on from your first beat.", t_kit)
-    tutorial("send-po32", "Send to a PO-32", "Your sounds and patterns, on a Pocket Operator, as audio.", t_send)
+    tutorial("make-a-kit", "Make a kit", "How the heck do we make 'infinite sounds' with a $67 synth and less than 1mb of space?", t_kit)
+    tutorial("send-po32", "Send to a PO-32", "Sending your masterpiece to a Pocket Operator.", t_send)
     tutorial("sync", "Sync your FM-1s", "Chipbox, Smileyface and Drumlab over Bluetooth: one leads, the others follow. Tempo, kicks, patterns, effects, key.", t_smiley)
     # the patterns page
     d = Doc("../")
@@ -452,7 +451,7 @@ def tutorials():
     intro = ('Common drum machine grooves, ready to write in. The idea is from <a href="https://shittyrecording.studio">Pocket Operations</a> by Shittyrecording.studio, '
              'a book of patterns for pocket machines. These patterns are our own.')
     body = '  <p class="intro">%s</p>\n\n%s\n' % (intro, d.html())
-    write("manual/patterns/index.html", page("Drum patterns · Drumlab", body, 2, "Tutorials", tag="DRUM PATTERNS"))
+    write("manual/patterns/index.html", page("Drum patterns · Drumlab", body, 2, "Tutorials", tag="DRUM PATTERNS", exp=EXP["patterns"]))
     # the list
     items = [("first-beat/", "Your first beat", "A house beat on the device, step by step. Start here."),
              ("make-a-kit/", "Make a kit", "Roll a kit, keep it, tweak a sound."),
@@ -499,7 +498,7 @@ CONTROLS = [
 ]
 WINDOWS = [
     ("Projects (hold HOME)", "SELECT / PRESETS choose. HOME opens. Hold HOME: close. Hold EDIT: delete, OCT+ yes."),
-    ("Kits (SOUND, OCT+)", "SELECT / PRESETS choose. PLAY rolls the dice. OCT+ keeps. OCT- puts the old kit back."),
+    ("Kits (LAB, OCT+)", "SELECT / PRESETS choose. PLAY rolls the dice. OCT+ keeps. OCT- puts the old kit back."),
     ("Send (SEND, PLAY)", "OCT+ sends. Anything else puts it away."),
     ("Menu (GLO + HOME)", "SELECT / PRESETS pick a row. OCT+ / OCT- change it. HOME leaves."),
     ("Lessons (menu)", "KNOB 1 picks. OCT+ starts. HOME leaves. Done: OCT+ for the next."),
@@ -570,7 +569,7 @@ def cheatsheet():
     body = f'''
   {cheat_panel()}
   <div class="tables"><table>
-    <thead><tr><th></th><th>PATTERN</th><th>SOUND</th><th>SEND</th></tr></thead>
+    <thead><tr><th></th><th>PATTERN</th><th>LAB</th><th>SEND</th></tr></thead>
     <tbody>{rows}</tbody>
   </table></div>
   <div class="cheat">

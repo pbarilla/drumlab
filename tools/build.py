@@ -50,7 +50,7 @@ SDK_SHA256 = {
     "cfg/eq_cfg_hw.bin": "41167491bffed4651750719c973d2758adeb9021a5670d02d6a53c85ed80ea7d",
 }
 
-APP_OPT = os.environ.get("APP_OPT", "-O2")      # the app only; the update loader always builds with CFLAGS
+APP_OPT = os.environ.get("APP_OPT", "-Os")      # the app only; the update loader always builds with CFLAGS. NOT -O2: at -O2 usb.c's SIE accessors make the host drop the USB link as soon as the device sends MIDI (see CLAUDE.md)
 PRODUCT = "FM-1_032"                # fixed identity; not 9NN, so installers can't resume an interrupted install of it
 VERSION = None                      # APP_VER for release builds
 
