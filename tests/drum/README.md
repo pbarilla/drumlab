@@ -5,3 +5,4 @@ Host tests for `drum.c` (the drum voice) and `po32tx.c` (the PO-32 transfer), ag
 - `mt2txt.py preset.mtpreset outdir`: a Microtonic preset to eight `.mtdrum` texts. `sweep.py SEED`: 50 random presets, spectral and level deviation (needs numpy; run it where `cmp` is built).
 - `txt.c`: builds a transfer with libpo and with `po32tx.c`, checks the bytes match and that libpo decodes our audio.
 - `eqt.c`: the EQ biquad against double precision.
+- `ref_import.c`, `imp_cmp.c` (run by `tests/cmp_import.mjs` and `tests/test_mtaccuracy.mjs`, see CLAUDE.md "Microtonic import / export"): libpo's text importer as a filter, and our imported sound against libpo's synth. `tests/mtlib.mjs` finds the local Microtonic sample folders.

@@ -511,16 +511,16 @@ static void draw_chain(void)                                        /* the chain
         num2(b, chain[i] + 1u); txtc(x + 13, y + 1, b[0] == '0' ? b + 1 : b, on ? SK.bg : SK.hot);
     }
 }
-static void draw_fx(void)                                          /* the 16 punch-in effects on the 16 keys */
+static void draw_fx(void)                                          /* the 16 punch-in effects on the 16 keys: the PO-32's own, or with Brothers Link on the shared eight, seven of the PO-32's and the latch */
 {
     static const char *const P1[16] = {"STOP", "REPEAT", "LPF", "HPF", "ECHO", "REVERB", "CRUSH", "GATE", "HALF", "DIST", "P-LFO", "BEND", "GRAIN", "REVRSE", "FM", "LATCH"};
-    uint32_t s;
+    uint32_t s, link = brothers_mode != 0u;
     cv_rect(0, 44, 240, 172, SK.bg);
     for (s = 0; s < 16u; s++) {
         int32_t x = 3 + (int32_t)(s & 3u) * 59, y = 47 + (int32_t)(s >> 2) * 42;
-        uint32_t hot = s < 8u ? (uint32_t)(bfx_local >> s & 1u) : s == 15u ? (uint32_t)(fx_lamp & 1u) : (uint32_t)(fx_mask >> FX_PAD1[s - 8u] & 1u);
+        uint32_t hot = !link ? (uint32_t)(fx_mask >> s & 1u) : s < 8u ? (uint32_t)(bfx_local >> s & 1u) : s == 15u ? (uint32_t)(fx_lamp & 1u) : (uint32_t)(fx_mask >> FX_PAD1[s - 8u] & 1u);
         rrect_o(x, y, 57, 39, 5, hot ? K_CREAM : K_CHRD, hot ? K_AMB : K_PLATE);
-        txtc(x + 28, y + 11, P1[s], hot ? SK.bg : SK.text);
+        txtc(x + 28, y + 11, link ? P1[s] : FX_NAME[s], hot ? SK.bg : SK.text);
     }
 }
 static void pat_body(void)
@@ -959,7 +959,7 @@ static void draw_bt(void)
 static void draw_menu(void)
 {
     if (bt_on) { draw_bt(); return; }
-    static const char *const LAB[NMENU] = {"MIDI CLOCK", "MIDI CHANNEL", "LESSONS", "BATTERY", "FACTORY RESET", "BLUETOOTH", "ABOUT"};
+    static const char *const LAB[NMENU] = {"MIDI CLOCK", "MIDI CHANNEL", "LESSONS", "BATTERY", "FACTORY RESET", "BROTHERS LINK", "ABOUT"};
     static const char *const SYNC[3] = {"OFF", "SEND", "FOLLOW"};
     uint32_t i;
     cv_rect(0, 44, 240, 172, SK.bg);
@@ -997,22 +997,6 @@ static void draw_menu(void)
     }
 }
 
-static void draw_help(void)
-{
-    const hl_t *h = pick_on ? HELP_PICK : view == V_PAT ? HELP_PAT : view == V_SND ? HELP_SND : HELP_SEND;
-    uint32_t n = pick_on ? sizeof HELP_PICK / sizeof *h : view == V_PAT ? sizeof HELP_PAT / sizeof *h : view == V_SND ? sizeof HELP_SND / sizeof *h : sizeof HELP_SEND / sizeof *h, i;
-    cv_rect(0, 44, 240, 172, SK.bg);
-    cv_rect(3, 46, 234, 16, shade(SK.amber, 90)); dframe(3, 46, 234, 16, SK.amber);
-    txt(10, 46, "HELP", SK.hot);
-    if (n > 8u) txt(228 - tw("SELECT  Scroll", 1), 46, "SELECT  Scroll", SK.text);
-    for (i = 0; i < 8u && help_top + i < n; i++) {
-        int32_t y = 68 + (int32_t)i * 18;
-        txt(10, y, h[help_top + i].k, SK.amber);
-        txt(110, y, h[help_top + i].f, SK.text);
-    }
-    if (n > 8u) { int32_t y = 68 + (int32_t)(help_top * 128u / (n - 8u)); cv_rect(233, 68, 2, 142, SK.dim); cv_rect(231, y, 6, 14, SK.amber); }
-}
-
 /* ---- painting: the screen is four sections, each its own canvas; a change repaints only the sections it touches */
 static const int16_t SEC_Y[5] = {0, 44, 150, 216, 240};
 static int32_t sec_y(uint32_t i) { return i == 2u && view == V_SEND ? 124 : SEC_Y[i]; }      /* SEND's screen is cut on its centre line */
@@ -1021,11 +1005,11 @@ static void ui_sec(uint32_t s)
     int32_t y0 = sec_y(s), y1 = sec_y(s + 1);
     cv_begin(240, (uint32_t)(y1 - y0), lite() ? K_BODY : K_BG);
     cv_oy = -y0; band_y0 = y0; band_y1 = y1;
-    if (s != 3u && po_active()) draw_po();
+    if (help_on) scene_man();                                         /* the manual is the whole screen */
+    else if (s != 3u && po_active()) draw_po();
     else if (s == 0u) { draw_header(); if (fm1_ms - flash_ms < 500u) cv_rect(8, 40, 30, 2, save_ok ? K_MINT : K_CORAL); }
     else if (s == 3u) draw_tabs();
     else if (menu_on) draw_menu();
-    else if (help_on) draw_help();
     else if (pick_on) draw_pick();
     else if (view == V_PAT) { if (s == 1u) pat_body(); else pat_ctrl(); }
     else if (view == V_SND) { if (s == 1u) snd_body(); else snd_ctrl(); }
@@ -1137,7 +1121,7 @@ static void ui_draw(void)
         last_step = st;
     } else if (!sq_run) last_step = st;
     if (map_dirty && !help_on && !pick_on && !menu_on && view != V_PAT) { map_dirty = 0; ui_map(); }
-    if (fm1_ms - atom_ms >= 60u) { atom_ms = fm1_ms; if (!po_active()) ui_atom(); }
+    if (fm1_ms - atom_ms >= 60u) { atom_ms = fm1_ms; if (!po_active() && !help_on) ui_atom(); }
 }
 
 static void ui_leds(void)

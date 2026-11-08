@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // The Projects page: download and upload a slot, back up and restore all of them, send a sample.
 import { Device, looksRight, toBackup, fromBackup } from "./fm1proj.js";
+import { initImport } from "./projimport.js";
 
 const $ = (id) => document.getElementById(id);
 const TEXT = {
@@ -26,12 +27,13 @@ const fail = (e) => {
 };
 
 let busy = false;
-const op = async (fn) => {                      // one thing at a time: the FM-1 takes one transfer at once
-  if (busy) return;
+const op = async (fn) => {                      // one thing at a time: the FM-1 takes one transfer at once. false when it was busy.
+  if (busy) return false;
   busy = true; document.body.classList.add("busy");
   try { await fn(); } catch (e) { fail(e); } finally { busy = false; document.body.classList.remove("busy"); }
+  return true;
 };
-let dev = null, info = null, samples = [], pending = null;     // pending: { slot } or { restore: true } for the file chooser
+let dev = null, info = null, samples = [], pending = null, imp = null;     // pending: { slot } or { restore: true } for the file chooser
 
 const save = (name, data, type) => {
   const a = document.createElement("a");
@@ -62,6 +64,7 @@ async function refresh() {
     box.append(row);
   });
   renderSamples();
+  if (imp) imp.rebuildBase();
 }
 
 const download = (i) => op(async () => {
@@ -175,7 +178,10 @@ $("connect").addEventListener("click", () => {
   });
 });
 
+imp = initImport({ $, mk, btn, op, say, save, put, refresh, prog, getDev: () => ({ dev, info }), samples: () => samples });
+
 (async () => {
   try { samples = await (await fetch("samples.json")).json(); } catch (_) { samples = []; }
   renderSamples();
+  imp.rebuildBase();
 })();

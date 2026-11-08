@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How a sound is made · Drumlab</title>
+<meta name="description" content="">
+<link rel="stylesheet" href="../../lab.css">
+<link rel="stylesheet" href="../../notebook.css">
+</head>
+<body class="nb s2">
+<main>
+  <div class="mast"><svg class="atom" viewBox="-50 -50 100 100" width="76" height="76" aria-hidden="true"><g fill="none" stroke="#6edcb9" stroke-width="2.2"><ellipse rx="44" ry="15" transform="rotate(0)"/><ellipse rx="44" ry="15" transform="rotate(60)"/><ellipse rx="44" ry="15" transform="rotate(120)"/></g><g transform="rotate(0)"><circle r="3.8" fill="#eee4c6"><animateMotion dur="3.1s" repeatCount="indefinite" path="M44,0 A44,15 0 1,1 -44,0 A44,15 0 1,1 44,0"/></circle></g><g transform="rotate(60)"><circle r="3.8" fill="#ffa03c"><animateMotion dur="4.3s" repeatCount="indefinite" path="M44,0 A44,15 0 1,0 -44,0 A44,15 0 1,0 44,0"/></circle></g><g transform="rotate(120)"><circle r="3.8" fill="#eee4c6"><animateMotion dur="5.2s" repeatCount="indefinite" path="M44,0 A44,15 0 1,1 -44,0 A44,15 0 1,1 44,0"/></circle></g><circle r="11" fill="#f06446" stroke="#eee4c6" stroke-width="2"/></svg><h1><a href="../../">Drumlab</a> <span class="tag">TUTORIAL</span></h1></div>
+  
+  <nav class="dial" aria-label="Pages"><a href="../.././">Home</a><a href="../../play/">Play</a><a href="../../install.html">Install</a><a href="../../guide/">Manual</a><a href="../../manual/" aria-current="page">Tutorials</a><a href="../../cheatsheet/">Cheat sheet</a><a href="../../projects/">Projects</a><a href="https://github.com/pbarilla/drumlab">Source</a></nav>
+  <div class="sheet">
+  <span class="exp">Experiment 6</span>
+  <p class="intro">What each of the 21 settings does, and how to make a kick, a snare, a hat and the rest.</p>
+
+  <section class="step">
+    <h2><b>1</b>The signal path</h2>
+    <div class="item"><div class="t"><div>Every sound is made of two parts: a tone and some noise. You can use either one, or both.</div></div></div>
+    <div class="item"><div class="t"><div>The tone is the <b>oscillator</b>. Its pitch can bend and wobble (MOD). The noise goes through a filter. Each has its own volume shape.</div></div></div>
+    <div class="item"><div class="t"><div>Then the two are mixed, pushed through some distortion, shaped by an EQ and turned up or down.</div></div></div>
+    <div class="block"><table><tr><td>OSC</td><td>MOD</td><td rowspan="2">MIX</td><td rowspan="2">DIST</td><td rowspan="2">EQ</td><td rowspan="2">LEVEL</td></tr><tr><td>NOISE</td><td>ENV</td></tr></table></div>
+    <div class="item"><div class="t"><div>The knobs are in pages of four: OSC, MOD, NOISE, ENV, OUT and SOUND. Turn <code>ALGORITHM</code> to flip between them. All the values go from 0 to 99, except frequencies, which show in Hz, and the EQ, which shows dB.</div></div></div>
+    <div class="item"><div class="t"><div>The PO-32 has the same 21 settings in the same order, so everything you make here goes over to it as it is.</div></div></div>
+  </section>
+
+  <section class="step">
+    <h2><b>2</b>OSC: the tone</h2>
+    <div class="item"><div class="t"><div><code>WAVE</code> picks the shape: sine (smooth, round), triangle (a bit brighter) or saw (buzzy and bright).</div></div></div>
+    <div class="item"><div class="t"><div><code>FREQ</code> is the pitch, from 20 Hz to 20 kHz. Low is a kick or a tom. High is a tick or a zap.</div></div></div>
+    <div class="item"><div class="t"><div><code>ATTACK</code> is how slowly the tone fades in. At 0 it hits straight away. A little attack takes the click off.</div></div></div>
+    <div class="item"><div class="t"><div><code>DECAY</code> is how long it rings out, from a tiny blip to a long boom.</div></div></div>
+  </section>
+
+  <section class="step">
+    <h2><b>3</b>MOD: bend the pitch</h2>
+    <div class="item"><div class="t"><div><code>MODE</code> picks what happens to the pitch. DECAY slides it from one pitch to another. SINE wobbles it up and down. NOISE jitters it at random.</div></div></div>
+    <div class="item"><div class="t"><div><code>RATE</code> is the speed of the slide or the wobble. A fast SINE wobble does not sound like a wobble any more: it sounds like metal. That's how you make cowbells and hats.</div></div></div>
+    <div class="item"><div class="t"><div><code>AMOUNT</code> is how far. In the middle there is no bend. Turn it up and the pitch starts high and falls to FREQ (a kick). Turn it down and it starts low and rises (a laser going backwards).</div></div></div>
+    <div class="item"><div class="t"><div><code>VELOC</code> lets harder hits bend more.</div></div></div>
+  </section>
+
+  <section class="step">
+    <h2><b>4</b>NOISE: the hiss</h2>
+    <div class="item"><div class="t"><div><code>FILTER</code> picks what the noise is filtered with: LP keeps the lows (a thud), BP keeps a band (a snare, a clap), HP keeps the highs (a hat).</div></div></div>
+    <div class="item"><div class="t"><div><code>FREQ</code> is where the filter sits, in Hz.</div></div></div>
+    <div class="item"><div class="t"><div><code>Q</code> makes the filter pickier. Up high it rings and whistles around FREQ.</div></div></div>
+    <div class="item"><div class="t"><div><code>VELOC</code> lets harder hits make more noise.</div></div></div>
+  </section>
+
+  <section class="step">
+    <h2><b>5</b>ENV: the noise's shape</h2>
+    <div class="item"><div class="t"><div><code>SHAPE</code> is the noise's volume shape. EXP falls away quickly, LIN ramps down evenly, and MOD chops it into a flutter, like a few people clapping a bit apart.</div></div></div>
+    <div class="item"><div class="t"><div><code>ATTACK</code> and <code>DECAY</code> are the same as the oscillator's, but for the noise. In MOD, <code>DECAY</code> sets how fast the flutter goes.</div></div></div>
+    <div class="item"><div class="t"><div><code>MIX</code> is the balance. Left is all tone, right is all noise, in the middle is half and half.</div></div></div>
+  </section>
+
+  <section class="step">
+    <h2><b>6</b>OUT: finish it</h2>
+    <div class="item"><div class="t"><div><code>DIST</code> is distortion. At 0 it's clean. Up high it's crushed and loud, and the sound gets fat.</div></div></div>
+    <div class="item"><div class="t"><div><code>EQ HZ</code> picks a frequency and <code>EQ DB</code> boosts or cuts it, up to 40 dB. The middle is flat. Boost the lows for weight, cut the mids to open it up.</div></div></div>
+    <div class="item"><div class="t"><div><code>LEVEL</code> is how loud the sound is. Turn it down for a sound that is too loud, rather than turning everything else up.</div></div></div>
+  </section>
+
+  <section class="step">
+    <h2><b>7</b>SOUND</h2>
+    <div class="item"><div class="t"><div><code>VELOC</code> lets harder hits make the oscillator louder. A hit on an accent is a harder hit.</div></div></div>
+    <div class="item"><div class="t"><div><code>PITCH</code> moves the whole sound up or down 12 semitones. <code>MORPH</code> slides from patch A to patch B: every sound is two patches. Press <code>SEL</code> in the LAB view to swap, and turn <code>KNOB 4</code> on the PATTERN view to morph.</div></div></div>
+  </section>
+
+  <section class="step">
+    <h2><b>8</b>Recipes</h2>
+    <div class="item"><div class="t"><div><b>Kick</b>: sine at 45 to 60 Hz, a long DECAY. MOD in DECAY mode with AMOUNT well up, so it starts high and falls. A little noise in MIX for the click. A touch of DIST.</div></div></div>
+    <div class="item"><div class="t"><div><b>Snare</b>: triangle around 180 Hz with a short DECAY, plus noise through BP or HP at about 2K with a medium DECAY. MIX towards the noise, about 60.</div></div></div>
+    <div class="item"><div class="t"><div><b>Closed hat</b>: MIX all the way to noise, HP at 8K or higher, a very short ENV DECAY. For an <b>open hat</b>, make the DECAY longer.</div></div></div>
+    <div class="item"><div class="t"><div><b>Clap</b>: all noise, BP at about 1.2K with some Q, ENV SHAPE on MOD and a medium DECAY. Change DECAY to change the flutter.</div></div></div>
+    <div class="item"><div class="t"><div><b>Tom</b>: a sine around 120 to 200 Hz, a medium DECAY, MOD in DECAY mode with a gentle AMOUNT. No noise.</div></div></div>
+    <div class="item"><div class="t"><div><b>Cowbell or metal</b>: a triangle or saw around 500 Hz to 1 kHz, MOD in SINE mode with a fast RATE and some AMOUNT, then DIST. Short DECAY.</div></div></div>
+    <div class="item"><div class="t"><div><b>Zap</b>: a saw high up, a long DECAY, MOD in DECAY mode with a big AMOUNT.</div></div></div>
+    <div class="item"><div class="t"><div><b>Bass</b>: a sine at 40 to 80 Hz with a very long DECAY, no MOD, and some DIST for harmonics.</div></div></div>
+  </section>
+
+  <section class="step">
+    <h2><b>9</b>Tips</h2>
+    <div class="item"><div class="t"><div>Turn one knob at a time. The sound plays when you stop turning, so you hear every change.</div></div></div>
+    <div class="item"><div class="t"><div>Press <code>PLAY</code> to loop the sound while you tweak it, and hold <code>EDIT</code> for fine steps.</div></div></div>
+    <div class="item"><div class="t"><div>Roll a kit with <code>OCT+</code>, then change what you don't like. It's faster than starting from nothing.</div></div></div>
+    <div class="item"><div class="t"><div>Sounds 1, 5, 9 and 13 share one voice (and 2, 6, 10 and 14, and so on), as on the PO-32, so a new hit cuts the old one. Put an open hat and a closed hat in the same column and the closed one shuts the open one up.</div></div></div>
+  </section>
+  <span class="stamp">Verified</span>
+  </div>
+  <footer>GPL-3.0-only, see <a href="https://github.com/pbarilla/drumlab/blob/main/LICENSING.md">LICENSING.md</a>. Built on <a href="../../../chipbox/">Chipbox</a>, which is built on <a href="https://github.com/zvenson/dinghy">Dinghy</a>, which is built on <a href="https://github.com/hugelton/Felucca">Felucca</a> by Leo Kuroshita (Hügelton Instruments) with the changes of <a href="https://github.com/isod89/sloop-fm1">SLOOP</a> (isod89). PO-32 and Pocket Operator belong to Teenage Engineering, who have nothing to do with this.</footer>
+</main>
+<script src="../../lab.js"></script>
+</body>
+</html>

@@ -1,7 +1,9 @@
 {
-  "what": "Microtonic, for the FM-1! Perfectly craft your dream drum kit (or roll the dice for something weird), and even send it to your Teenage Engineering PO-32, PO-35, etc! Built on Chipbox!",
+  "what": "Microtonic, for the FM-1! Roll the dice for a kit, build one from scratch, or bring in your Microtonic presets and patterns. Share kits and patterns as files, and send it all to your Teenage Engineering PO-32! Built on Chipbox!",
   "author": "pbarilla",
-  "kinds": ["drums"],
+  "kinds": [
+    "drums"
+  ],
   "play": "https://ihavenocluewhatimdoing.com/drumlab/play/",
   "editor": "https://ihavenocluewhatimdoing.com/drumlab/projects/",
   "image": "site/img/card.png",

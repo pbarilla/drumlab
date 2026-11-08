@@ -17,11 +17,28 @@
   .row .what small { display:block; color:var(--dim); font-size:13px; }
   .row.open { outline:1px solid var(--mint); }
   .btns { margin:0; gap:6px; }
-  select { font:inherit; font-size:14px; background:var(--bg); color:var(--cream); border:1px solid #4a4658; border-radius:6px; padding:7px 8px; }
+  select { font:inherit; font-size:14px; background:#fffaea; color:#23202c; border:1.5px solid #23202c; border-radius:6px; padding:6px 8px; max-width:100%; }
   #status { margin:16px 0; min-height:1.55em; }
   #bar { width:100%; height:8px; display:none; accent-color:var(--coral); }
   input[type=file] { display:none; }
   body.busy button, body.busy .btn, body.busy select { opacity:.4; pointer-events:none; }
+  h3 { margin:22px 0 8px; }
+  .work { margin:0 0 6px; display:flex; flex-wrap:wrap; align-items:center; gap:6px 10px; }
+  .work small, .dim { font-size:13px; }
+  .drop { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:8px 14px; padding:18px 14px; border:2px dashed #23202c66; border-radius:8px; background:#fbf3da; color:#23202c; margin-bottom:8px; }
+  .drop.over { border-color:#1f6b63; background:#e9f3e6; }
+  .item { padding:12px 14px; background:#fffaea; color:#23202c; border:1px solid #23202c33; box-shadow:0 2px 0 #23202c22; border-radius:8px; margin-bottom:8px; }
+  .ihead { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+  .ihead .what { flex:1 1 auto; min-width:0; overflow-wrap:anywhere; }
+  .fields { display:flex; flex-wrap:wrap; gap:8px 16px; margin:10px 0 2px; align-items:center; }
+  .field { display:inline-flex; align-items:center; gap:6px; }
+  .field .lab, .chk { color:var(--dim); font-size:13px; }
+  .chk input { margin-right:4px; accent-color:var(--mint); }
+  ul.notes { margin:8px 0 0; padding-left:18px; font-size:14px; }
+  ul.notes li { margin:2px 0; }
+  #exports.off { opacity:.5; pointer-events:none; }
+  #exports .btns { display:flex; flex-wrap:wrap; align-items:center; gap:6px; }
+  #exports small select { font-size:13px; padding:2px 4px; }
 </style>
 <link rel="stylesheet" href="../notebook.css">
 </head>
@@ -42,9 +59,32 @@
     <p id="confirm" hidden></p>
   </div>
 
+  <h2>Kits and patterns</h2>
+  <p class="work">Work on <select id="base"></select> <small id="baseinfo"></small></p>
+
+  <h3>Import</h3>
+  <div id="drop" class="drop"><span>Drop files here: Microtonic <code>.mtpreset</code> <code>.mtdrum</code> <code>.mid</code>, or Drumlab kit and pattern files.</span><button id="pickfiles" class="alt">Pick files</button></div>
+  <div id="items"></div>
+  <p class="btns"><button id="add" hidden>Add to project</button></p>
+  <div id="result" hidden>
+    <h3>Changed</h3>
+    <ul class="notes" id="changes"></ul>
+    <p class="btns"><button id="dl">Download project</button> <span id="writebox"></span> <button id="startover" class="alt">Start over</button></p>
+  </div>
+
+  <h3>Export</h3>
+  <div id="exports">
+    <div class="row"><div class="what">Microtonic presets<small>4 files: sounds 1-8 and 9-16, patch A and B. Each has 8 sounds and 12 patterns, from pattern <select id="expfirst"></select>. No step pitch, morph or effects.</small></div><div class="btns"><button id="exppresets" class="alt">Download .zip</button></div></div>
+    <div class="row"><div class="what">Microtonic drum patches<small>32 .mtdrum files, one per sound and patch.</small></div><div class="btns"><button id="expdrums" class="alt">Download .zip</button></div></div>
+    <div class="row"><div class="what">Drumlab kit<small>All 16 sounds, A and B. Import it again here.</small></div><div class="btns"><button id="expkit" class="alt">Download</button></div></div>
+    <div class="row"><div class="what">Drumlab patterns<small>With tempo, swing and chain.</small></div><div class="btns"><select id="exppat"></select><button id="exppattern" class="alt">Download</button></div></div>
+  </div>
+
   <h2>Samples</h2>
   <div id="samples"></div>
   <input type="file" id="pick" accept=".drumlab,.json">
+  <input type="file" id="importpick" multiple accept=".mtpreset,.mtdrum,.mtpg,.mtdp,.mid,.midi,.json,text/plain">
+  <input type="file" id="basepick" accept=".drumlab,.json">
   </div>
   <footer>GPL-3.0-only, see <a href="https://github.com/pbarilla/drumlab/blob/main/LICENSING.md">LICENSING.md</a>. Built on <a href="../../chipbox/">Chipbox</a>, which is built on <a href="https://github.com/zvenson/dinghy">Dinghy</a>, which is built on <a href="https://github.com/hugelton/Felucca">Felucca</a> by Leo Kuroshita (Hügelton Instruments) with the changes of <a href="https://github.com/isod89/sloop-fm1">SLOOP</a> (isod89). PO-32 and Pocket Operator belong to Teenage Engineering, who have nothing to do with this.</footer>
 </main>

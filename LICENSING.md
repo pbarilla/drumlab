@@ -26,6 +26,6 @@ complete source under the same licence too.
 ## Trademarks
 
 "Felucca" and "Hügelton Instruments" are names of Hügelton Instruments; "M-VAVE" and "FM-1" belong to their
-owners. "PO-32", "PO-35" and "Pocket Operator" belong to Teenage Engineering, and "Microtonic" to Sonic Charge. Drumlab is not
+owners. "PO-32" and "Pocket Operator" belong to Teenage Engineering, and "Microtonic" to Sonic Charge. Drumlab is not
 made or endorsed by any of them. The PO-32 transfer format was read from [libpo](https://github.com/ericlewis/libpo) (MIT), which is
 used only to check our output in `tests/` and is not part of this tree.

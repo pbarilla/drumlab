@@ -21,29 +21,13 @@ static const struct { const char *title; pm_t p[4]; } PG[6] = {
 static const char *const DISC[4][3] = {{"SIN", "TRI", "SAW"}, {"DECAY", "SINE", "NOISE"}, {"LP", "BP", "HP"}, {"EXP", "LIN", "MOD"}};
 static int disc_of(uint32_t idx) { return idx == 0 ? 0 : idx == 4 ? 1 : idx == 7 ? 2 : idx == 10 ? 3 : -1; }
 
-/* ---- help (GLO): bare words, only what works */
-typedef struct { const char *k, *f; } hl_t;
-static const hl_t HELP_PAT[] = {
-    {"KEYS", "Pads  Steps"}, {"PRESETS", "Sound"}, {"SELECT", "Pattern"}, {"PLAY", "Play  Stop"}, {"REC", "Write"}, {"REC hold", "Punch in  Lock"},
-    {"ENV", "Accent"}, {"ARP", "Mute  Solo"}, {"SEL", "Chain"}, {"SEL > EDIT", "Chain undo  clear"}, {"FX tap", "Pads on  off"}, {"FX hold", "Pads while held"},
-    {"FX KEYS", "16 pads"}, {"FX pad 16", "Latch"}, {"REC + FX", "Record pads 9-15"}, {"EDIT hold", "Clear"}, {"LFO", "Undo"}, {"OCT+", "Copy to next"},
-    {"KNOB 1", "Tempo"}, {"KNOB 2", "Swing"}, {"KNOB 3", "Pitch"}, {"KNOB 4", "Morph"}, {"SAVE", "Save"}, {"HOME", "View"}, {"HOME hold", "Projects"},
-    {"GLO + HOME", "Menu"},
-};
-static const hl_t HELP_SND[] = {
-    {"KEYS", "Hear"}, {"PRESETS", "Sound"}, {"ALGORITHM", "Page"}, {"KNOBS", "Settings"}, {"SEL", "Patch A  B"}, {"PLAY", "Loop"}, {"OCT+", "Kits"},
-    {"EDIT hold", "Fine"}, {"SAVE", "Save"}, {"HOME", "View"}, {"HOME hold", "Projects"}, {"GLO + HOME", "Menu"},
-};
-static const hl_t HELP_SEND[] = {{"PLAY", "Send  Stop"}, {"KEYS", "Pads"}, {"KNOBS", "Tempo  Swing  Pitch  Morph"}, {"HOME", "View"}, {"HOME hold", "Projects"}, {"GLO + HOME", "Menu"}};
-static const hl_t HELP_PICK[] = {{"SELECT", "Choose"}, {"HOME", "Open"}, {"HOME hold", "Close"}, {"EDIT hold", "Delete"}, {"GLO + HOME", "Menu"}};
-
 /* ---- state */
 #define NMENU 7
 static uint8_t view, sel, pg, side, wr, accm, mutem, chainm, fx_layer, aud_loop;     /* mutem: 0 off, 1 mute, 2 solo */
 static uint8_t fx_lamp;
 static uint16_t p1_tog; static uint8_t p1_lat;                  /* the effects layer, page 1: the pads latched on, the latch */
 static uint8_t bt_on, bt_sel;                                  /* the Bluetooth page of the menu: Sync, Sidechain, Patterns */
-static uint8_t pick_on, pick_sel, del_ask, help_on, help_top, send_ask, menu_on, menu_sel, reset_ask, fx_latch, fx_held, kseq, kit_on, kit_sel, about_on, po_mode;      /* send_ask: the window that asks before the noise */
+static uint8_t pick_on, pick_sel, del_ask, help_on, send_ask, menu_on, menu_sel, reset_ask, fx_latch, fx_held, kseq, kit_on, kit_sel, about_on, po_mode;      /* send_ask: the window that asks before the noise */
 static int8_t held_step = -1;
 static uint8_t pv_play = 1;
 static uint32_t dirty = 1, map_dirty, last_step = 99, dsec;       /* dirty: repaint everything; dsec: only these sections */
@@ -178,7 +162,9 @@ static void pv_step(void)
     pv_ok = 1; pv_run = 0; dsec |= SEC_BODY;
 }
 
+static void scene_man(void);
 #include "labdraw.c"
+#include "labman.c"
 
 static void do_save(void)
 {
@@ -187,7 +173,6 @@ static void do_save(void)
     dirty = 1;
 }
 
-static uint32_t help_n(void) { return pick_on ? sizeof HELP_PICK / sizeof HELP_PICK[0] : view == V_PAT ? sizeof HELP_PAT / sizeof HELP_PAT[0] : view == V_SND ? sizeof HELP_SND / sizeof HELP_SND[0] : sizeof HELP_SEND / sizeof HELP_SEND[0]; }
 
 
 /* ---- the Bluetooth page (GLO + HOME, BLUETOOTH): the sync and what rides on it. The mode and the switches are kept (lset.flags) */
@@ -337,6 +322,7 @@ static void ui_input(uint32_t keys, uint32_t kdown, uint32_t kup, uint32_t b, ui
         if (pick_on) { pick_on = 0; pick_leave(); } else { seq_stop(); if (lab_dirty) { lab_save(lab_slot); lab_dirty = 0; } pick_on = 1; pick_sel = lab_slot; del_ask = 0; help_on = 0; fx_layer = 0; fx_latch = 0; pick_aud = 1; pick_t = fm1_ms; }
         dirty = 1;
     }
+    if (help_on && (bup >> BTN_HOME & 1u) && !home_used) { help_on = 0; home_used = 1; dirty = 1; }
     if ((bup >> BTN_HOME & 1u) && !home_used) {
         if (pick_on) {
             if (del_ask) del_ask = 0;
@@ -344,13 +330,8 @@ static void ui_input(uint32_t keys, uint32_t kdown, uint32_t kup, uint32_t b, ui
         } else { view = (uint8_t)((view + 1u) % NVIEW); chainm = 0; fx_layer = 0; fx_latch = 0; aud_loop = 0; help_on = 0; }
         dirty = 1;
     }
-    if (bdown >> BTN_GLO & 1u) { help_on ^= 1u; help_top = 0; dirty = 1; }
-    if (help_on) {                                                      /* help: SELECT scrolls, everything else waits */
-        if ((e = fm1_enc_take(ENC_SELECT)) != 0) { int32_t t = (int32_t)help_top + e, mx = (int32_t)help_n() - 8; help_top = (uint8_t)(t < 0 ? 0 : t > mx ? (mx < 0 ? 0 : mx) : t); dirty = 1; }
-        (void)fm1_enc_take(ENC_PRESETS); (void)fm1_enc_take(ENC_ALGORITHM);
-        (void)fm1_enc_take(ENC_KNOB1); (void)fm1_enc_take(ENC_KNOB2); (void)fm1_enc_take(ENC_KNOB3); (void)fm1_enc_take(ENC_KNOB4);
-        return;
-    }
+    if (bdown >> BTN_GLO & 1u) { if (!help_on) man_open(man_for_screen(), 0u); else man_toc ^= 1u; dirty = 1; }
+    if (help_on) { man_input(bdown); return; }
     if (pick_on) {
         if ((e = fm1_enc_take(ENC_SELECT)) != 0) { pick_sel = (uint8_t)((pick_sel + 12 + (e % 12)) % 12u); dirty = 1; pick_aud = 1; pick_t = fm1_ms; }
         if ((e = fm1_enc_take(ENC_PRESETS)) != 0) { pick_sel = (uint8_t)((pick_sel + 12 + (e % 12)) % 12u); dirty = 1; pick_aud = 1; pick_t = fm1_ms; }
@@ -422,7 +403,7 @@ static void ui_input(uint32_t keys, uint32_t kdown, uint32_t kup, uint32_t b, ui
         uint32_t mk = 0, fm;
         static uint32_t pmk;
         for (i = 0; i < 16u; i++) if (keys >> WHITE[i] & 1u) mk |= 1u << i;
-        {                                                              /* the shared pads, seven of the PO-32's, the latch (pad 16: a tap turns a pad on and the next tap off) */
+        if (brothers_mode) {                                           /* Brothers Link is on: the shared pads, seven of the PO-32's, the latch (pad 16: a tap turns a pad on and the next tap off) */
             uint32_t dn = mk & ~pmk, pad, held = mk & 0x7FFFu;
             for (pad = 0; pad < 15u; pad++) if (p1_lat && (dn >> pad & 1u)) p1_tog ^= 1u << pad;
             if (dn >> 15 & 1u) { p1_lat ^= 1u; if (!p1_lat) p1_tog = 0; }
@@ -431,9 +412,10 @@ static void ui_input(uint32_t keys, uint32_t kdown, uint32_t kup, uint32_t b, ui
             fm = 0;
             for (pad = 0; pad < 7u; pad++) if (held >> (8u + pad) & 1u) fm |= 1u << FX_PAD1[pad];
             mk = fm | (p1_lat ? 1u << 16 : 0u);                          /* (bit 16: the latch lamp) */
-        }
+        } else { bfx_local = 0; p1_lat = 0; p1_tog = 0; }              /* Brothers Link is off: the PO-32's own 16 effects, pad n is effect n (mk is the keys held) */
         pmk = keys ? (uint32_t)0 : 0u;
         { uint32_t k2 = 0; for (i = 0; i < 16u; i++) if (keys >> WHITE[i] & 1u) k2 |= 1u << i; pmk = k2; }
+        { static uint8_t lbl; if (bfx_local != lbl) { lbl = bfx_local; dirty = 1; } }          /* (pads 1-8 lit too) */
         if ((mk & 0xFFFFu) != fx_mask || (uint8_t)(mk >> 16) != fx_lamp) dirty = 1;
         fx_lamp = (uint8_t)(mk >> 16);
         fx_mask = (uint16_t)mk;

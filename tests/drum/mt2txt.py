@@ -28,7 +28,7 @@ def mtdrum(d):
     L.append('NEnvAtk: %s ms'%f('NEnvAtk'))
     L.append('NEnvDcy: %s ms'%f('NEnvDcy'))
     mix=float(f('Mix'))
-    L.append('Mix: %.6f%% osc, %.6f%% noise'%(100-mix,mix))
+    L.append('Mix: %.6f%% osc, %.6f%% noise'%(mix,100-mix))      # Mix in a .mtpreset is the OSCILLATOR's share (found 2026-11-09: BD 86, hats 33 on average); this had it the other way round
     L.append('DistAmt: %s%%'%f('DistAmt'))
     L.append('EQFreq: %s Hz'%f('EQFreq'))
     L.append('EQGain: %s dB'%f('EQGain'))

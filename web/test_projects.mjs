@@ -4,6 +4,8 @@
 import { readFileSync } from "node:fs";
 import { Device, looksRight, toBackup, fromBackup } from "../site/js/fm1proj.js";
 import { pack7, unpack7 } from "../site/js/fm1ota.js";
+import { decodeProject, encodeProject } from "../site/js/drumproj.js";
+import { readItem, defaultPlan, applyItem, exportPresets, exportKit, exportPatterns } from "../site/js/imports.js";
 
 let failed = 0;
 const ok = (c, w) => { console.log(`${w.padEnd(66)} ${c ? "ok" : "FAIL"}`); if (!c) failed++; };
@@ -70,5 +72,30 @@ let bad = false; try { fromBackup('{"chipbox":1}'); } catch (e) { bad = true; }
 ok(bad, "a Chipbox file is refused");
 let err = null; try { await dev.write(2, Uint8Array.from([9, 1, 2, 3])); } catch (e) { err = e; }
 ok(err && err.code === "write" && err.status === 2, "a bad project: the device says 2, we throw");
+
+// import -> write -> read back, the way the Projects page does it: read a slot, change the project, write a slot, read it back
+{
+  const P = decodeProject(await dev.read(3));
+  const donor = decodeProject(b);                                              // another project: its sounds and patterns, shared as Microtonic files and as Drumlab files
+  const presets = exportPresets(donor, "donor", 0);
+  const it = readItem(presets[1].name, new TextEncoder().encode(presets[1].data));                // sounds 1-8, patch B
+  const lines = applyItem(P, it, { ...defaultPlan(it), half: 1, side: 1, first: 4, fit: false });
+  ok(lines.length >= 3 && it.kind === "preset", "import: a Microtonic preset into the project read from slot 4, the page's lines say what changed");
+  const bytes = encodeProject(P);
+  ok(looksRight(bytes) && bytes.length === 5077, "import: the changed project is a valid project for the Projects page and the FM-1's px_ok");
+  await dev.write(7, bytes);
+  const again = decodeProject(await dev.read(7));
+  ok(encodeProject(again).every((v, i) => v === bytes[i]) && again.patches[8][1].every((v, i) => v === donor.patches[0][1][i]), "import: written to slot 8 and read back, the donor's sound 1 patch B is on sound 9 B");
+  ok(again.pats[4].trig.some((t) => t & 15) && again.knob[8][1] === 255, "import: the pattern landed on pattern 5 and sound 9 plays patch B");
+  info = await dev.info();
+  ok(info.slots[7].used && info.slots[3].used && link.slots[3].every((v, i) => v === a[i]), "import: slot 8 is written, slot 4 was not touched");
+  const kitf = exportKit(donor, "donor"), patf = exportPatterns(donor, "donor", "all");
+  const Q = decodeProject(await dev.read(0));
+  applyItem(Q, readItem(kitf.name, new TextEncoder().encode(kitf.data)), {});
+  applyItem(Q, readItem(patf.name, new TextEncoder().encode(patf.data)), { first: 0, extras: true });
+  await dev.write(9, encodeProject(Q));
+  const R = decodeProject(await dev.read(9));
+  ok(R.patches.every((two, s2) => two[0].every((v, i) => v === donor.patches[s2][0][i])) && R.pats.every((q, i) => q.trig.every((v, k) => v === donor.pats[i].trig[k])) && R.bpm === donor.bpm, "share files: a kit and patterns from one project, imported into another, written and read back: the same");
+}
 if (failed) { console.log(failed + " FAILED"); process.exit(1); }
 console.log("projects tests passed");

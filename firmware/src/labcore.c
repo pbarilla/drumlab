@@ -44,7 +44,7 @@ enum { FX_HALF, FX_DIST, FX_SQUASH, FX_ECHO, FX_PLFO, FX_EQSW, FX_MORPH, FX_BEND
 static volatile uint16_t fx_mask, fx_rec, fx_eff;       /* fx_mask: held now; fx_rec: recorded on the step that plays; fx_eff: both */
 static const char *const FX_NAME[16] = {"HALF", "DIST", "SQUASH", "ECHO", "P-LFO", "EQ SW", "MORPH", "BEND", "PUNCH", "6/8", "REPEAT", "REP 2", "FM", "GRAIN", "REVRSE", "BOUNCE"};
 
-/* the effects layer: pads 1-8 are the brothers' shared effects (bfx.c: the same code and the same pads on Chipbox and Smileyface, and the ones that travel over Bluetooth),
+/* the effects layer. Brothers Link off: the 16 pads are the 16 PO-32 effects above. Brothers Link on: pads 1-8 are the brothers' shared effects (bfx.c: the same code and the same pads on Chipbox and Smileyface, and the ones that travel over Bluetooth),
  * 9-15 are seven of the PO-32's effects below (recorded on the steps like before), 16 is the latch. */
 #define BFX_POOL POOL_
 #include "bfx.c"
@@ -291,6 +291,7 @@ static void core_audio(int32_t *out, uint32_t n)
     { static uint32_t t60; t60 += n; if (t60 >= 735u) { t60 -= 735u; bfx_tick(); } }                  /* the shared effects (bfx.c) */
     bfx_mask = bfx_local | (brothers_mode == 2u && bt_fxsync ? brothers_fx() & 0xFFu : 0u);          /* ours, and the leader's */
     if (bfx_busy() || bfx_mask) bfx_run(out, n, sq_len ? sq_len >> 8 : 5000u);
+    else bfx_rec(out, n);
     if (brothers_mode == 2u && bt_side) {                       /* the sidechain: the leader's kicks pull everything down and let go */
         uint32_t g = brothers_duck(190u);
         if (g < 256u) for (i = 0; i < 2u * n; i++) out[i] = ((out[i] >> 4) * (int32_t)g) >> 4;

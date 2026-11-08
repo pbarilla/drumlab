@@ -14,8 +14,8 @@ FW_PLAY = os.path.join(ROOT, "..", "fw", "site", "play", "index.html")
 
 # footers the author reworded by hand on two pages (kept here so a regenerate does not undo them)
 FOOT = {
-    "guide/index.html": '<footer>GPL-3.0-only, see <a href="https://github.com/pbarilla/drumlab/blob/main/LICENSING.md">LICENSING.md</a>. Built on <a href="../../chipbox/">Chipbox</a>, which is built on <a href="https://github.com/zvenson/dinghy">Dinghy</a>, which is built on <a href="https://github.com/hugelton/Felucca">Felucca</a> by Leo Kuroshita (Hügelton Instruments) with the changes of <a href="https://github.com/isod89/sloop-fm1">SLOOP</a> (isod89). PO-32, PO-35, and Pocket Operator belong to Teenage Engineering. Microtonic belongs to Sonic Charge. They\'re not involved in this, and are likely unaware of it. But hey, if you work there and are reading this: Hi!</footer>',
-    "manual/send-po32/index.html": '<footer>GPL-3.0-only, see <a href="https://github.com/pbarilla/drumlab/blob/main/LICENSING.md">LICENSING.md</a>. Built on <a href="../../../chipbox/">Chipbox</a>, which is built on <a href="https://github.com/zvenson/dinghy">Dinghy</a>, which is built on <a href="https://github.com/hugelton/Felucca">Felucca</a> by Leo Kuroshita (Hügelton Instruments) with the changes of <a href="https://github.com/isod89/sloop-fm1">SLOOP</a> (isod89). PO-32, PO-35 and Pocket Operator belong to Teenage Engineering, who have nothing to do with this. Sonic Charge owns Microtonic, and is not involved in this. Hope they dont get mad...</footer>',
+    "guide/index.html": '<footer>GPL-3.0-only, see <a href="https://github.com/pbarilla/drumlab/blob/main/LICENSING.md">LICENSING.md</a>. Built on <a href="../../chipbox/">Chipbox</a>, which is built on <a href="https://github.com/zvenson/dinghy">Dinghy</a>, which is built on <a href="https://github.com/hugelton/Felucca">Felucca</a> by Leo Kuroshita (Hügelton Instruments) with the changes of <a href="https://github.com/isod89/sloop-fm1">SLOOP</a> (isod89). PO-32 and Pocket Operator belong to Teenage Engineering. Microtonic belongs to Sonic Charge. They\'re not involved in this, and are likely unaware of it. But hey, if you work there and are reading this: Hi!</footer>',
+    "manual/send-po32/index.html": '<footer>GPL-3.0-only, see <a href="https://github.com/pbarilla/drumlab/blob/main/LICENSING.md">LICENSING.md</a>. Built on <a href="../../../chipbox/">Chipbox</a>, which is built on <a href="https://github.com/zvenson/dinghy">Dinghy</a>, which is built on <a href="https://github.com/hugelton/Felucca">Felucca</a> by Leo Kuroshita (Hügelton Instruments) with the changes of <a href="https://github.com/isod89/sloop-fm1">SLOOP</a> (isod89). PO-32 and Pocket Operator belong to Teenage Engineering, who have nothing to do with this. Sonic Charge owns Microtonic, and is not involved in this. Hope they dont get mad...</footer>',
 }
 
 
@@ -159,11 +159,28 @@ def projects():
   .row .what small { display:block; color:var(--dim); font-size:13px; }
   .row.open { outline:1px solid var(--mint); }
   .btns { margin:0; gap:6px; }
-  select { font:inherit; font-size:14px; background:var(--bg); color:var(--cream); border:1px solid #4a4658; border-radius:6px; padding:7px 8px; }
+  select { font:inherit; font-size:14px; background:#fffaea; color:#23202c; border:1.5px solid #23202c; border-radius:6px; padding:6px 8px; max-width:100%; }
   #status { margin:16px 0; min-height:1.55em; }
   #bar { width:100%; height:8px; display:none; accent-color:var(--coral); }
   input[type=file] { display:none; }
   body.busy button, body.busy .btn, body.busy select { opacity:.4; pointer-events:none; }
+  h3 { margin:22px 0 8px; }
+  .work { margin:0 0 6px; display:flex; flex-wrap:wrap; align-items:center; gap:6px 10px; }
+  .work small, .dim { font-size:13px; }
+  .drop { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:8px 14px; padding:18px 14px; border:2px dashed #23202c66; border-radius:8px; background:#fbf3da; color:#23202c; margin-bottom:8px; }
+  .drop.over { border-color:#1f6b63; background:#e9f3e6; }
+  .item { padding:12px 14px; background:#fffaea; color:#23202c; border:1px solid #23202c33; box-shadow:0 2px 0 #23202c22; border-radius:8px; margin-bottom:8px; }
+  .ihead { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+  .ihead .what { flex:1 1 auto; min-width:0; overflow-wrap:anywhere; }
+  .fields { display:flex; flex-wrap:wrap; gap:8px 16px; margin:10px 0 2px; align-items:center; }
+  .field { display:inline-flex; align-items:center; gap:6px; }
+  .field .lab, .chk { color:var(--dim); font-size:13px; }
+  .chk input { margin-right:4px; accent-color:var(--mint); }
+  ul.notes { margin:8px 0 0; padding-left:18px; font-size:14px; }
+  ul.notes li { margin:2px 0; }
+  #exports.off { opacity:.5; pointer-events:none; }
+  #exports .btns { display:flex; flex-wrap:wrap; align-items:center; gap:6px; }
+  #exports small select { font-size:13px; padding:2px 4px; }
 </style>
 '''
     body = '''
@@ -177,9 +194,32 @@ def projects():
     <p id="confirm" hidden></p>
   </div>
 
+  <h2>Kits and patterns</h2>
+  <p class="work">Work on <select id="base"></select> <small id="baseinfo"></small></p>
+
+  <h3>Import</h3>
+  <div id="drop" class="drop"><span>Drop files here: Microtonic <code>.mtpreset</code> <code>.mtdrum</code> <code>.mid</code>, or Drumlab kit and pattern files.</span><button id="pickfiles" class="alt">Pick files</button></div>
+  <div id="items"></div>
+  <p class="btns"><button id="add" hidden>Add to project</button></p>
+  <div id="result" hidden>
+    <h3>Changed</h3>
+    <ul class="notes" id="changes"></ul>
+    <p class="btns"><button id="dl">Download project</button> <span id="writebox"></span> <button id="startover" class="alt">Start over</button></p>
+  </div>
+
+  <h3>Export</h3>
+  <div id="exports">
+    <div class="row"><div class="what">Microtonic presets<small>4 files: sounds 1-8 and 9-16, patch A and B. Each has 8 sounds and 12 patterns, from pattern <select id="expfirst"></select>. No step pitch, morph or effects.</small></div><div class="btns"><button id="exppresets" class="alt">Download .zip</button></div></div>
+    <div class="row"><div class="what">Microtonic drum patches<small>32 .mtdrum files, one per sound and patch.</small></div><div class="btns"><button id="expdrums" class="alt">Download .zip</button></div></div>
+    <div class="row"><div class="what">Drumlab kit<small>All 16 sounds, A and B. Import it again here.</small></div><div class="btns"><button id="expkit" class="alt">Download</button></div></div>
+    <div class="row"><div class="what">Drumlab patterns<small>With tempo, swing and chain.</small></div><div class="btns"><select id="exppat"></select><button id="exppattern" class="alt">Download</button></div></div>
+  </div>
+
   <h2>Samples</h2>
   <div id="samples"></div>
   <input type="file" id="pick" accept=".drumlab,.json">
+  <input type="file" id="importpick" multiple accept=".mtpreset,.mtdrum,.mtpg,.mtdp,.mid,.midi,.json,text/plain">
+  <input type="file" id="basepick" accept=".drumlab,.json">
 '''
     write("projects/index.html", page("Projects · Drumlab", body, 1, "Projects", tag="PROJECTS", head=css, scripts='<script type="module" src="../js/projects.js"></script>\n'))
 
@@ -205,7 +245,7 @@ def guide():
     I = d.item
     d.section("The three views",
         I("`HOME` flips between PATTERN, LAB and SEND.", "g-home"),
-        I("PATTERN is where you write the beat, LAB is where you shape the sounds, and SEND lets you push your masterpiece to a PO-32 or PO-35."),
+        I("PATTERN is where you write the beat, LAB is where you shape the sounds, and SEND lets you push your masterpiece to a PO-32."),
         I("Hold `HOME` to open the projects."),
         I("`GLO` shows the help for the view you're on.", "g-help"),
         I("`GLO` + `HOME` opens the menu."),
@@ -248,9 +288,10 @@ def guide():
     d.section("Effects",
         I("Tap `FX` and the 16 white keys become effects. Hold a key for its effect. Tap `FX` again to put them away. Or hold `FX` for the layer while you hold it.", "g-fx"),
         d.block(fx_map()),
-        I("Pads 1 to 8 are the same on Chipbox, Smileyface and Drumlab, and they travel over Bluetooth: STOP, REPEAT, LPF, HPF, ECHO, REVERB, CRUSH and GATE."),
-        I("Pads 9 to 15 only exist on Drumlab: HALF, DIST, P-LFO, BEND, GRAIN, REVRSE and FM. They are the PO-32's effects, so with WRITE on and the pattern playing, they are written into the steps as they pass."),
-        I("Pad 16 is the LATCH. With it on, a tap holds a pad on and the next tap lets it go."),
+        I("The 16 pads are the PO-32's effects: HALF, DIST, SQUASH, ECHO, P-LFO, EQ SW, MORPH, BEND, PUNCH, 6/8, REPEAT, REP 2, FM, GRAIN, REVRSE and BOUNCE. With WRITE on and the pattern playing, they are written into the steps as they pass."),
+        I("With Brothers Link on (Sync set to Lead or Follow), the pads change. Pads 1 to 8 are the same on Chipbox, Smileyface and Drumlab, and they travel over Bluetooth: STOP, REPEAT, LPF, HPF, ECHO, REVERB, CRUSH and GATE."),
+        I("Pads 9 to 15 are then seven of the PO-32's effects: HALF, DIST, P-LFO, BEND, GRAIN, REVRSE and FM. They are written into the steps as before."),
+        I("Pad 16 is then the LATCH. With it on, a tap holds a pad on and the next tap lets it go."),
         I("With WRITE on, hold `FX` and press nothing while it plays to wipe the effects from the steps as they pass."), id="fx")
     d.section("The LAB view",
         I("`PRESETS` picks the sound.", "g-knobs"),
@@ -276,7 +317,7 @@ def guide():
         d.block("<p>Preset kits: %s.</p>" % kits),
         I("On the rolled kit, `PLAY` rolls another."),
         I("`OCT+` keeps the kit. `OCT-` puts the old one back."), id="kits")
-    d.section("Sending to a PO-32, PO-35, etc",
+    d.section("Sending to a PO-32",
         I("In the SEND view, hit the `PLAY` button. Now thank me later, but a warning appears.", "g-send"),
         I("`OCT+` sends all 16 sounds, A and B, the 16 patterns, the tempo, the swing and the chain.", "g-ask"),
         I("The <a href=\"../manual/send-po32/\">tutorial</a> has more information!"), id="send")
@@ -328,7 +369,7 @@ def guide():
 
 
 # ================================================================== the tutorials
-EXP = {"first-beat": 1, "make-a-kit": 2, "send-po32": 3, "sync": 4, "patterns": 5}
+EXP = {"first-beat": 1, "make-a-kit": 2, "send-po32": 3, "sync": 4, "patterns": 5, "sound-engine": 6}
 
 
 def tutorial(slug, title, intro, build):
@@ -390,7 +431,7 @@ def t_kit(d):
 def t_send(d):
     I = d.item
     d.section("Plug in",
-        I("Plug a cable from the FM-1's output into the PO-32 or PO-35's input. Turn `MASTER` up."),
+        I("Plug a cable from the FM-1's output into the PO-32's input. Turn `MASTER` up."),
         I("Get the PO-32 listening: <code class=\"po\">acc</code> + <code class=\"po\">sound</code>."))
     d.section("Send it",
         I("Tap `HOME` until you're in the SEND view.", "s-home"),
@@ -415,7 +456,7 @@ def t_smiley(d):
     d.section("What else comes along",
         I("SIDECHAIN: the leader says where its kicks are. The followers duck on each one and swell back, so the bass pumps against the beat. Drumlab sends its first lane."),
         I("PATTERNS: when the leader changes pattern, the followers change at the end of their loop. Its swing comes along too."),
-        I("PUNCH-IN FX: hold one of pads 1 to 8 on page 1 of the effects layer on the leader and the followers do it too: STOP, REPEAT, LPF, HPF, ECHO, REVERB, CRUSH and GATE. Pads 9 to 15 are different on each FM-1 and don't travel."),
+        I("PUNCH-IN FX: hold one of pads 1 to 8 of the effects layer (the layout that shows when Brothers Link is on) on the leader and the followers do it too: STOP, REPEAT, LPF, HPF, ECHO, REVERB, CRUSH and GATE. Pads 9 to 15 are different on each FM-1 and don't travel."),
         I("KEY: Chipbox and Smileyface work out the key of what they play. A following one moves its notes to the leader's key. Drumlab has no notes, so it has no KEY row."))
     d.section("The demo",
         I("DEMO loads a locked project: D minor, 124 BPM. Load it on each brother, make one the leader, and hit `PLAY`."),
@@ -439,10 +480,63 @@ def t_patterns(d):
         d.item("Rings show where the hits go. Press the steps to fill them.", "l-half")))
 
 
+
+def t_engine(d):
+    I = d.item
+    d.section("The signal path",
+        I("Every sound is made of two parts: a tone and some noise. You can use either one, or both."),
+        I("The tone is the <b>oscillator</b>. Its pitch can bend and wobble (MOD). The noise goes through a filter. Each has its own volume shape."),
+        I("Then the two are mixed, pushed through some distortion, shaped by an EQ and turned up or down."),
+        d.block('<table><tr><td>OSC</td><td>MOD</td><td rowspan="2">MIX</td><td rowspan="2">DIST</td><td rowspan="2">EQ</td><td rowspan="2">LEVEL</td></tr><tr><td>NOISE</td><td>ENV</td></tr></table>'),
+        I("The knobs are in pages of four: OSC, MOD, NOISE, ENV, OUT and SOUND. Turn `ALGORITHM` to flip between them. All the values go from 0 to 99, except frequencies, which show in Hz, and the EQ, which shows dB."),
+        I("The PO-32 has the same 21 settings in the same order, so everything you make here goes over to it as it is."))
+    d.section("OSC: the tone",
+        I("`WAVE` picks the shape: sine (smooth, round), triangle (a bit brighter) or saw (buzzy and bright)."),
+        I("`FREQ` is the pitch, from 20 Hz to 20 kHz. Low is a kick or a tom. High is a tick or a zap."),
+        I("`ATTACK` is how slowly the tone fades in. At 0 it hits straight away. A little attack takes the click off."),
+        I("`DECAY` is how long it rings out, from a tiny blip to a long boom."))
+    d.section("MOD: bend the pitch",
+        I("`MODE` picks what happens to the pitch. DECAY slides it from one pitch to another. SINE wobbles it up and down. NOISE jitters it at random."),
+        I("`RATE` is the speed of the slide or the wobble. A fast SINE wobble does not sound like a wobble any more: it sounds like metal. That's how you make cowbells and hats."),
+        I("`AMOUNT` is how far. In the middle there is no bend. Turn it up and the pitch starts high and falls to FREQ (a kick). Turn it down and it starts low and rises (a laser going backwards)."),
+        I("`VELOC` lets harder hits bend more."))
+    d.section("NOISE: the hiss",
+        I("`FILTER` picks what the noise is filtered with: LP keeps the lows (a thud), BP keeps a band (a snare, a clap), HP keeps the highs (a hat)."),
+        I("`FREQ` is where the filter sits, in Hz."),
+        I("`Q` makes the filter pickier. Up high it rings and whistles around FREQ."),
+        I("`VELOC` lets harder hits make more noise."))
+    d.section("ENV: the noise's shape",
+        I("`SHAPE` is the noise's volume shape. EXP falls away quickly, LIN ramps down evenly, and MOD chops it into a flutter, like a few people clapping a bit apart."),
+        I("`ATTACK` and `DECAY` are the same as the oscillator's, but for the noise. In MOD, `DECAY` sets how fast the flutter goes."),
+        I("`MIX` is the balance. Left is all tone, right is all noise, in the middle is half and half."))
+    d.section("OUT: finish it",
+        I("`DIST` is distortion. At 0 it's clean. Up high it's crushed and loud, and the sound gets fat."),
+        I("`EQ HZ` picks a frequency and `EQ DB` boosts or cuts it, up to 40 dB. The middle is flat. Boost the lows for weight, cut the mids to open it up."),
+        I("`LEVEL` is how loud the sound is. Turn it down for a sound that is too loud, rather than turning everything else up."))
+    d.section("SOUND",
+        I("`VELOC` lets harder hits make the oscillator louder. A hit on an accent is a harder hit."),
+        I("`PITCH` moves the whole sound up or down 12 semitones. `MORPH` slides from patch A to patch B: every sound is two patches. Press `SEL` in the LAB view to swap, and turn `KNOB 4` on the PATTERN view to morph."))
+    d.section("Recipes",
+        I("<b>Kick</b>: sine at 45 to 60 Hz, a long DECAY. MOD in DECAY mode with AMOUNT well up, so it starts high and falls. A little noise in MIX for the click. A touch of DIST."),
+        I("<b>Snare</b>: triangle around 180 Hz with a short DECAY, plus noise through BP or HP at about 2K with a medium DECAY. MIX towards the noise, about 60."),
+        I("<b>Closed hat</b>: MIX all the way to noise, HP at 8K or higher, a very short ENV DECAY. For an <b>open hat</b>, make the DECAY longer."),
+        I("<b>Clap</b>: all noise, BP at about 1.2K with some Q, ENV SHAPE on MOD and a medium DECAY. Change DECAY to change the flutter."),
+        I("<b>Tom</b>: a sine around 120 to 200 Hz, a medium DECAY, MOD in DECAY mode with a gentle AMOUNT. No noise."),
+        I("<b>Cowbell or metal</b>: a triangle or saw around 500 Hz to 1 kHz, MOD in SINE mode with a fast RATE and some AMOUNT, then DIST. Short DECAY."),
+        I("<b>Zap</b>: a saw high up, a long DECAY, MOD in DECAY mode with a big AMOUNT."),
+        I("<b>Bass</b>: a sine at 40 to 80 Hz with a very long DECAY, no MOD, and some DIST for harmonics."))
+    d.section("Tips",
+        I("Turn one knob at a time. The sound plays when you stop turning, so you hear every change."),
+        I("Press `PLAY` to loop the sound while you tweak it, and hold `EDIT` for fine steps."),
+        I("Roll a kit with `OCT+`, then change what you don't like. It's faster than starting from nothing."),
+        I("Sounds 1, 5, 9 and 13 share one voice (and 2, 6, 10 and 14, and so on), as on the PO-32, so a new hit cuts the old one. Put an open hat and a closed hat in the same column and the closed one shuts the open one up."))
+
+
 def tutorials():
     tutorial("first-beat", "Your first beat", "A house beat in about two minutes: kick, snare, hat. Start here.", t_first)
     tutorial("make-a-kit", "Make a kit", "How the heck do we make 'infinite sounds' with a $67 synth and less than 1mb of space?", t_kit)
     tutorial("send-po32", "Send to a PO-32", "Sending your masterpiece to a Pocket Operator.", t_send)
+    tutorial("sound-engine", "How a sound is made", "What each of the 21 settings does, and how to make a kick, a snare, a hat and the rest.", t_engine)
     tutorial("sync", "Sync your FM-1s", "Chipbox, Smileyface and Drumlab over Bluetooth: one leads, the others follow. Tempo, kicks, patterns, effects, key.", t_smiley)
     # the patterns page
     d = Doc("../")
@@ -456,6 +550,7 @@ def tutorials():
     items = [("first-beat/", "Your first beat", "A house beat on the device, step by step. Start here."),
              ("make-a-kit/", "Make a kit", "Roll a kit, keep it, tweak a sound."),
              ("send-po32/", "Send to a PO-32", "Sounds and patterns over a cable."),
+             ("sound-engine/", "How a sound is made", "The 21 settings, and recipes for kicks, snares, hats and more."),
              ("sync/", "Sync your FM-1s", "One leads over Bluetooth, the others follow."),
              ("patterns/", "Drum patterns", "%d grooves to write in: four on the floor, boom bap, trap, and more." % len(PATTERNS))]
     d = Doc("")
