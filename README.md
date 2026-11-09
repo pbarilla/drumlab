@@ -1,6 +1,6 @@
 # Drumlab
 
-A drum machine for the FM-1 that works like the PO-32 tonic, and sends its sounds and patterns to one.
+A Microtonic drum machine for the FM-1 that can send kits, patterns, chains, etc to Microtonic enabled Pocket Operators
 
 <p>
 <img src="site/img/playing.png" width="32%"> <img src="site/img/snd.png" width="32%"> <img src="site/img/send.png" width="32%">
@@ -9,9 +9,9 @@ A drum machine for the FM-1 that works like the PO-32 tonic, and sends its sound
 
 ## What is it
 
-16 sounds, 16 patterns, 4 lanes, all the PO-32's tricks, and a screen that looks like a 1950s science lab. Make the beat here, turn the knobs, roll a kit, then plug a cable into a PO-32 and it hears all of it.
+16 sounds, 16 patterns, 4 lanes, all the PO-32's tricks, Brothers Link ready, and a kitchy retro-futuristic UI that resembles a science lab. Craft the perfect kit, follow along with the experiments, and then send it all to your Pocket Operator!
 
-No PO-32? It's still a drum machine.
+Dont own a PO-32? It's still a pretty good drum machine.
 
 ## Links
 

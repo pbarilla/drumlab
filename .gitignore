@@ -17,5 +17,3 @@ site/firmware/
 site/play/drumlab.js
 site/play/drumlab.wasm
 
-# the cheat sheet (the pages workflow makes it: tools/make_cheatsheet.py)
-site/cheatsheet/index.html
