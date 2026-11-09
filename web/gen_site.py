@@ -563,7 +563,7 @@ def guide():
         I("Hold `HOME` to open the projects. There are 12.", "g-picker"),
         I("`SELECT` or `PRESETS` to pick one!"),
         I("`HOME` opens it. Hold `HOME` to close the list and stay where you were."),
-        I("Hold `EDIT` to delete the selected pattern.", "g-delete"),
+        I("Hold `EDIT` to delete the selected project. The demo can go too, and then project 1 is yours. Restore Demos in the menu brings it back while that slot is empty.", "g-delete"),
         I(
             "A new project starts from the LAB-1 kit. Whats the LAB-1 kit? Oh... you know."
         ),
@@ -585,7 +585,14 @@ def guide():
                         "ANY, or 1 to 16. Only notes and controllers from that channel come in.",
                     ],
                     ["LESSONS", "`KNOB 1` picks one, `OCT+` starts it."],
+                    ["SHOW TIPS", "YES shows a tip after five minutes of nothing. Any touch puts it away."],
+                    [
+                        "QUICK START ALWAYS",
+                        "YES shows the quick start every time you switch on. A new device shows it once.",
+                    ],
+                    ["PROJECTS AT START", "YES opens the projects when you switch on."],
                     ["BATTERY", "How full it is."],
+                    ["RESTORE DEMOS", "`OCT+` brings the demo back into project 1. It waits while a project of yours is there."],
                     [
                         "FACTORY RESET",
                         "`OCT+` asks. Yes erases the projects and puts the demos back.",

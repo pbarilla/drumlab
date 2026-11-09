@@ -93,6 +93,14 @@ static void send_start(void)
     if (send_build()) { po32tx_play(&tx); sending = 1; }
 }
 
+#ifdef LAB_NOQS                                              /* the older host scripts press keys from the first millisecond: they run without the quick start */
+#define QS_ON 0
+#else
+#define QS_ON 1
+#endif
+static uint32_t act_ms;                                      /* the last touch (a button, a key, a knob): the tips wait for it to be old */
+static int32_t enc_act(uint32_t e) { int32_t v = fm1_enc_take(e); if (v) act_ms = fm1_ms; return v; }
+#define fm1_enc_take enc_act                                 /* (every knob read below counts as a touch) */
 #include "labui.c"
 
 static void app_audio(int32_t *out, uint32_t n)
@@ -118,10 +126,12 @@ static void app_audio(int32_t *out, uint32_t n)
 
 static void app_main(void)
 {
-    uint32_t draw_max = 0, prev_keys = 0, prev_b = 0, cc_ms = 0, draw_ms = 0, led_ms = 0;
+    uint32_t draw_max = 0, prev_keys = 0, prev_b = 0, cc_ms = 0, draw_ms = 0, led_ms = 0, started = 0;
     core_init();
     proj_boot();
     ui_init();
+    act_ms = fm1_ms;
+    qs_pick = (lset.pad[0] & QS_PICK) != 0u;
     lcd_fill(0, 0, 240, 240, C_BLACK);
 #if !defined(CHIPBOX_HOST) || defined(LAB_BOOT)                 /* (LAB_BOOT: the power-on picture in the host sim too) */
     {                                                           /* power on: the atom builds itself, then the name */
@@ -154,7 +164,9 @@ static void app_main(void)
         platform_poll();
         keys = fm1_in.notes; kdown = keys & ~prev_keys; kup = prev_keys & ~keys; prev_keys = keys;
         { uint32_t rel; bdown = fm1_input_edges(&rel); bup = rel; b = fm1_in.buttons; prev_b = b; }
+        if (!started) { started = 1; act_ms = fm1_ms; if (QS_ON && (lab_fresh || (lset.pad[0] & QS_ALWAYS))) { man_open(MC_QUICK, 0u); man_lock = 1; } else if (qs_pick) { qs_pick = 0; pick_open_now(); } }    /* a new device, or the switch: the quick start, locked; else the projects, if the switch says so */
         ui_input(keys, kdown, kup, b, bdown, bup);
+        tip_tick();
 #ifndef CHIPBOX_HOST
         if (px_open_req) { uint32_t os = px_open_req - 1u; px_open_req = 0; if (os < LAB_SLOTS) { help_on = menu_on = pick_on = kit_on = 0; if (les_on) les_exit(); lab_open(os); view = V_PAT; sel = 0; pv_dirty = 1; pv_t = fm1_ms; dirty = 1; } }
 #endif

@@ -1,0 +1,5 @@
+800 shot
+900 held 0x100
+960 held 0
+1500 shot
+end

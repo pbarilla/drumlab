@@ -1,0 +1,6 @@
+1200 shot
+1500 enc 0 1
+1650 shot
+2000 btn 0
+2600 shot
+3000 end

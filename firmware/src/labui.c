@@ -22,7 +22,9 @@ static const char *const DISC[4][3] = {{"SIN", "TRI", "SAW"}, {"DECAY", "SINE", 
 static int disc_of(uint32_t idx) { return idx == 0 ? 0 : idx == 4 ? 1 : idx == 7 ? 2 : idx == 10 ? 3 : -1; }
 
 /* ---- state */
-#define NMENU 7
+#define NMENU 11
+enum { MR_CLOCK, MR_CHAN, MR_LESSONS, MR_TIPS, MR_QS, MR_PICK, MR_BAT, MR_DEMO, MR_RESET, MR_BT, MR_ABOUT };      /* the menu's rows (GLO + HOME) */
+static uint8_t qs_pick;                                         /* Projects At Start: the picker opens when the quick start is put away (or at once when there is none) */
 static uint8_t view, sel, pg, side, wr, accm, mutem, chainm, fx_layer, aud_loop;     /* mutem: 0 off, 1 mute, 2 solo */
 static uint8_t fx_lamp;
 static uint16_t p1_tog; static uint8_t p1_lat;                  /* the effects layer, page 1: the pads latched on, the latch */
@@ -163,8 +165,11 @@ static void pv_step(void)
 }
 
 static void scene_man(void);
+static void draw_tip(void);
+static uint8_t tip_on;
 #include "labdraw.c"
 #include "labman.c"
+#include "labtips.c"
 
 static void do_save(void)
 {
@@ -199,7 +204,7 @@ static void bt_input(uint32_t bdown)
 static void menu_input(uint32_t bdown)
 {
     int32_t e, d;
-    { int32_t k = fm1_enc_take(ENC_KNOB1); if (k && menu_sel == 2u) les_pick = (uint32_t)(((int32_t)les_pick + NLESSON + k % NLESSON) % NLESSON); }
+    { int32_t k = fm1_enc_take(ENC_KNOB1); if (k && menu_sel == MR_LESSONS) les_pick = (uint32_t)(((int32_t)les_pick + NLESSON + k % NLESSON) % NLESSON); }
     (void)fm1_enc_take(ENC_ALGORITHM); (void)fm1_enc_take(ENC_KNOB2); (void)fm1_enc_take(ENC_KNOB3); (void)fm1_enc_take(ENC_KNOB4);
     dirty = 1;
     if (bt_on) { bt_input(bdown); return; }
@@ -209,7 +214,8 @@ static void menu_input(uint32_t bdown)
             uint32_t k;
             seq_stop();
             for (k = 0; k < LAB_SLOTS; k++) lab_clear(k);
-            core_init(); demo_install(); lab_slot = 0; lab_loaded = lab_load(0) == 0; lab_dirty = 0; lab_slot_note(); reset_ask = 0; menu_on = 0; view = V_PAT; sel = 0; pv_dirty = 1;
+            lset.pad[1] = DG_OK; core_init(); demo_install(); lab_slot = 0; lab_loaded = lab_load(0) == 0; lab_dirty = 0; lab_slot_note(); reset_ask = 0; menu_on = 0; view = V_PAT; sel = 0; pv_dirty = 1;
+            man_open(MC_QUICK, 0u); man_lock = 1; home_used = 1;                                     /* like a new device: the quick start again */
         } else if (bdown & (1u << BTN_OCT_DOWN | 1u << BTN_HOME | 1u << BTN_GLO)) reset_ask = 0;
         (void)fm1_enc_take(ENC_SELECT); (void)fm1_enc_take(ENC_PRESETS);
         return;
@@ -224,12 +230,23 @@ static void menu_input(uint32_t bdown)
     if (e) menu_sel = (uint8_t)(((int32_t)menu_sel + NMENU + e % NMENU) % NMENU);
     d = (int32_t)(bdown >> BTN_OCT_UP & 1u) - (int32_t)(bdown >> BTN_OCT_DOWN & 1u);
     if (d) {
-        if (menu_sel == 2u && d > 0) { les_enter(les_pick); menu_on = 0; view = V_PAT; wr = 1; chainm = 0; pg = 0; sel = 0; home_used = 1; les_t0 = fm1_ms; dirty = 1; return; }
-        if (menu_sel == 0u) { lset.sync = (uint8_t)((lset.sync + 3 + d) % 3); sync_mode = lset.sync; set_dirty = 1; }
-        else if (menu_sel == 1u) { lset.chan = (uint8_t)((lset.chan + 17 + d) % 17); set_dirty = 1; }
-        else if (menu_sel == 4u && d > 0) reset_ask = 1;
-        else if (menu_sel == 5u && d > 0) { bt_on = 1; bt_sel = 0; }                                   /* BLUETOOTH: its page */
-        else if (menu_sel == 6u && d > 0) about_on = 1;
+        if (menu_sel == MR_LESSONS && d > 0) { les_enter(les_pick); menu_on = 0; view = V_PAT; wr = 1; chainm = 0; pg = 0; sel = 0; home_used = 1; les_t0 = fm1_ms; dirty = 1; return; }
+        if (menu_sel == MR_CLOCK) { lset.sync = (uint8_t)((lset.sync + 3 + d) % 3); sync_mode = lset.sync; set_dirty = 1; }
+        else if (menu_sel == MR_CHAN) { lset.chan = (uint8_t)((lset.chan + 17 + d) % 17); set_dirty = 1; }
+        else if (menu_sel == MR_TIPS) { lset.pad[0] ^= QS_NOTIPS; set_dirty = 1; }                      /* the switches: either button flips the row */
+        else if (menu_sel == MR_QS) { lset.pad[0] ^= QS_ALWAYS; set_dirty = 1; }
+        else if (menu_sel == MR_PICK) { lset.pad[0] ^= QS_PICK; set_dirty = 1; }
+        else if (menu_sel == MR_DEMO && d > 0) {                                                       /* RESTORE DEMOS: the deleted demo comes back (the open project is kept) */
+            seq_stop(); if (lab_dirty) { lab_save(lab_slot); lab_dirty = 0; }
+            if (demo_can_restore()) {                                                                  /* (project 1 must be empty: a project of the player's is never overwritten) */
+                demo_restore();
+                if (lab_load(lab_slot) != 0) core_init();
+                lab_loaded = lab_exists(lab_slot); lab_dirty = 0; pv_dirty = 1; set_dirty = 0;
+            }
+        }
+        else if (menu_sel == MR_RESET && d > 0) reset_ask = 1;
+        else if (menu_sel == MR_BT && d > 0) { bt_on = 1; bt_sel = 0; }                                /* BROTHERS LINK: its page */
+        else if (menu_sel == MR_ABOUT && d > 0) about_on = 1;
     }
 }
 
@@ -290,11 +307,17 @@ static void kit_input(uint32_t kdown, uint32_t bdown)
     if (pick_i < 8u && fm1_ms >= pick_next) { static const uint8_t AS[8] = {0, 2, 1, 2, 0, 2, 1, 3}; pad_hit(AS[pick_i++], 0); pick_next = fm1_ms + 125u; }
 }
 
+static void pick_open_now(void)                                     /* the projects: what is unsaved is saved, the picker hears the one it points at */
+{
+    seq_stop(); if (lab_dirty) { lab_save(lab_slot); lab_dirty = 0; }
+    pick_on = 1; pick_sel = lab_slot; del_ask = 0; help_on = 0; man_lock = 0; fx_layer = 0; fx_latch = 0; pick_aud = 1; pick_t = fm1_ms; dirty = 1;
+}
 static void ui_input(uint32_t keys, uint32_t kdown, uint32_t kup, uint32_t b, uint32_t bdown, uint32_t bup)
 {
     uint32_t i;
     int32_t e;
-    if (bdown | bup) dirty = 1;
+    if (bdown | bup | kdown | kup) { act_ms = fm1_ms; if (bdown | bup) dirty = 1; }
+    if (!help_on) man_lock = 0;                                          /* (something else closed the manual: the quick start is over) */
 
     if (send_ask) {                                                     /* the window over SEND: OCT+ sends; OCT-, PLAY or HOME put it away */
         if (bdown >> BTN_OCT_UP & 1u) { send_ask = 0; send_start(); }
@@ -310,19 +333,27 @@ static void ui_input(uint32_t keys, uint32_t kdown, uint32_t kup, uint32_t b, ui
     if (les_on && les_done && (bdown >> BTN_OCT_UP & 1u)) { uint32_t nx = (les_i + 1u) % NLESSON; les_exit(); les_enter(nx); les_t0 = fm1_ms; dirty = 1; return; }
     if (kit_on) { kit_input(kdown, bdown); return; }
     if (!les_on && (b >> BTN_GLO & 1u) && (b >> BTN_HOME & 1u) && (bdown & (1u << BTN_GLO | 1u << BTN_HOME))) {        /* GLO + HOME, either first: the menu */
-        menu_on = 1; menu_sel = 0; reset_ask = 0; help_on = 0; home_used = 1; fx_layer = 0; fx_latch = 0; dirty = 1;
+        menu_on = 1; menu_sel = 0; reset_ask = 0; help_on = 0; man_lock = 0; qs_pick = 0; home_used = 1; fx_layer = 0; fx_latch = 0; dirty = 1;
         if (pick_on) { pick_on = 0; pick_leave(); }
         return;
     }
 
     /* HOME: a tap is the next view (the picker's: open), a hold is the projects (the picker's: close) */
-    if (bdown >> BTN_HOME & 1u) { home_t0 = fm1_ms; home_used = 0; }
+    if (bdown >> BTN_HOME & 1u) { home_t0 = fm1_ms; home_used = tip_on; }                                   /* (a tip is up: HOME only puts it away) */
     if (!les_on && (b >> BTN_HOME & 1u) && !home_used && fm1_ms - home_t0 > 600u) {
         home_used = 1;
-        if (pick_on) { pick_on = 0; pick_leave(); } else { seq_stop(); if (lab_dirty) { lab_save(lab_slot); lab_dirty = 0; } pick_on = 1; pick_sel = lab_slot; del_ask = 0; help_on = 0; fx_layer = 0; fx_latch = 0; pick_aud = 1; pick_t = fm1_ms; }
+        if (pick_on) { pick_on = 0; pick_leave(); } else pick_open_now();
         dirty = 1;
     }
-    if (help_on && (bup >> BTN_HOME & 1u) && !home_used) { help_on = 0; home_used = 1; dirty = 1; }
+    if (help_on && man_lock && (bdown >> BTN_OCT_DOWN & 1u)) {                                      /* the quick start, OCT-: hide it (it will not come back by itself) */
+        help_on = 0; man_lock = 0; lset.pad[0] &= (uint8_t)~QS_ALWAYS; set_dirty = 1; dirty = 1;
+        if (qs_pick) { qs_pick = 0; pick_open_now(); }
+        (void)fm1_enc_take(ENC_SELECT); return;
+    }
+    if (help_on && (bup >> BTN_HOME & 1u) && !home_used) {
+        help_on = 0; home_used = 1; dirty = 1;
+        if (man_lock) { set_dirty = 1; man_lock = 0; if (qs_pick) { qs_pick = 0; pick_open_now(); } }                 /* the quick start is put away: the projects, if the switch says so */
+    }
     if ((bup >> BTN_HOME & 1u) && !home_used) {
         if (pick_on) {
             if (del_ask) del_ask = 0;
@@ -330,7 +361,7 @@ static void ui_input(uint32_t keys, uint32_t kdown, uint32_t kup, uint32_t b, ui
         } else { view = (uint8_t)((view + 1u) % NVIEW); chainm = 0; fx_layer = 0; fx_latch = 0; aud_loop = 0; help_on = 0; }
         dirty = 1;
     }
-    if (bdown >> BTN_GLO & 1u) { if (!help_on) man_open(man_for_screen(), 0u); else man_toc ^= 1u; dirty = 1; }
+    if (bdown >> BTN_GLO & 1u) { if (man_lock) {} else if (!help_on) man_open(man_for_screen(), 0u); else man_toc ^= 1u; dirty = 1; }       /* (GLO does nothing inside the quick start) */
     if (help_on) { man_input(bdown); return; }
     if (pick_on) {
         if ((e = fm1_enc_take(ENC_SELECT)) != 0) { pick_sel = (uint8_t)((pick_sel + 12 + (e % 12)) % 12u); dirty = 1; pick_aud = 1; pick_t = fm1_ms; }
@@ -338,9 +369,12 @@ static void ui_input(uint32_t keys, uint32_t kdown, uint32_t kup, uint32_t b, ui
         if (pick_aud && fm1_ms - pick_t > 140u) { pick_aud = 0; pick_show(pick_sel); }
         if (pick_i < 8u && fm1_ms >= pick_next) { static const uint8_t AS[8] = {0, 2, 1, 2, 0, 2, 1, 3}; pad_hit(AS[pick_i++], 0); pick_next = fm1_ms + 125u; }
         if (bdown >> BTN_EDIT & 1u) { edit_t0 = fm1_ms; edit_used = 0; }
-        if ((b >> BTN_EDIT & 1u) && !edit_used && !del_ask && fm1_ms - edit_t0 > 600u && lab_exists(pick_sel) && !(pick_sel == 0u && demo0)) { edit_used = 1; del_ask = 1; dirty = 1; }
+        if ((b >> BTN_EDIT & 1u) && !edit_used && !del_ask && fm1_ms - edit_t0 > 600u && lab_exists(pick_sel)) { edit_used = 1; del_ask = 1; dirty = 1; }
         if (del_ask && (bdown >> BTN_OCT_UP & 1u)) {
             lab_clear(pick_sel);
+            if (pick_sel == 0u && demo0) {                                                  /* the demo goes for good: it is not made again at start */
+                demo0 = 0; lset.pad[1] = DG_OK | DG_GONE; settings_save(&lset, sizeof lset);               /* (its slot is an ordinary one from now on) */
+            }
             if (pick_sel == lab_slot) { core_init(); lab_dirty = 0; }
             pick_aud = 1; pick_t = fm1_ms;
             del_ask = 0; dirty = 1;

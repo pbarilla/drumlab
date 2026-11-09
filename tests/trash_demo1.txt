@@ -1,0 +1,26 @@
+# run 1 on a fresh flash: delete the demo, open the freed slot, write a few steps, save into it
+500 held 0x100
+560 held 0
+900 held 0x100
+1700 held 0
+2000 held 0x40
+2800 shot
+2850 held 0
+3000 held 0x2
+3060 held 0
+3600 shot
+3700 held 0x100
+3760 held 0
+3900 held 0x2000
+3960 held 0
+4200 keys 0x1
+4250 keys 0
+4400 keys 0x80
+4450 keys 0
+4600 keys 0x4000
+4650 keys 0
+4800 shot
+5000 held 0x200
+5060 held 0
+5400 shot
+9000 end

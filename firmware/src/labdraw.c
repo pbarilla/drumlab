@@ -959,26 +959,27 @@ static void draw_bt(void)
 static void draw_menu(void)
 {
     if (bt_on) { draw_bt(); return; }
-    static const char *const LAB[NMENU] = {"MIDI CLOCK", "MIDI CHANNEL", "LESSONS", "BATTERY", "FACTORY RESET", "BROTHERS LINK", "ABOUT"};
+    static const char *const LAB[NMENU] = {"MIDI CLOCK", "MIDI CHANNEL", "LESSONS", "SHOW TIPS", "QUICK START ALWAYS", "PROJECTS AT START", "BATTERY", "RESTORE DEMOS", "FACTORY RESET", "BROTHERS LINK", "ABOUT"};
     static const char *const SYNC[3] = {"OFF", "SEND", "FOLLOW"};
     uint32_t i;
     cv_rect(0, 44, 240, 172, SK.bg);
     for (i = 0; i < NMENU; i++) {
-        int32_t y = 48 + (int32_t)i * 24;
+        int32_t y = 46 + (int32_t)i * 15;
         char v[20], *e = v;
-        uint32_t on = i == menu_sel;
-        rrect_o(8, y, 224, 22, 5, on ? K_CREAM : K_CHRD, on ? RGB(58, 52, 74) : K_PLATE);
-        txt(20, y + 3, LAB[i], on ? K_CREAM : RGB(200, 194, 170));
+        uint32_t on = i == menu_sel, sw = i == MR_TIPS || i == MR_QS || i == MR_PICK;
+        rrect_o(8, y, 224, 14, 3, on ? K_CREAM : K_CHRD, on ? RGB(58, 52, 74) : K_PLATE);
+        txt(20, y + 2, i == MR_DEMO && demo_gone() && !demo_can_restore() ? "RESTORE: SLOT 1 IN USE" : LAB[i], on ? K_CREAM : RGB(200, 194, 170));
         v[0] = 0;
-        if (i == 0u) { const char *t = SYNC[lset.sync]; while (*t) *e++ = *t++; *e = 0; }
-        else if (i == 1u) { if (!lset.chan) { e[0] = 'A'; e[1] = 'N'; e[2] = 'Y'; e[3] = 0; } else numu(e, lset.chan); }
-        else if (i == 2u) { const char *t = lessons[les_pick].name; while (*t) *e++ = *t++; *e = 0; }
-        else if (i == 3u) { e = numu(e, bat_pct); *e++ = '%'; *e = 0; }
-        else if (i == 4u) { if (on) { e[0] = 'O'; e[1] = 'C'; e[2] = 'T'; e[3] = '+'; e[4] = 0; } }
-        else if (i == 5u) { if (on) { e[0] = 'O'; e[1] = 'C'; e[2] = 'T'; e[3] = '+'; e[4] = 0; } }
+        if (i == MR_CLOCK) { const char *t = SYNC[lset.sync]; while (*t) *e++ = *t++; *e = 0; }
+        else if (i == MR_CHAN) { if (!lset.chan) { e[0] = 'A'; e[1] = 'N'; e[2] = 'Y'; e[3] = 0; } else numu(e, lset.chan); }
+        else if (i == MR_LESSONS) { const char *t = lessons[les_pick].name; while (*t) *e++ = *t++; *e = 0; }
+        else if (sw) { uint32_t yes = i == MR_TIPS ? !(lset.pad[0] & QS_NOTIPS) : (lset.pad[0] & (i == MR_QS ? QS_ALWAYS : QS_PICK)) != 0u; const char *t = yes ? "YES" : "NO"; while (*t) *e++ = *t++; *e = 0; }
+        else if (i == MR_BAT) { e = numu(e, bat_pct); *e++ = '%'; *e = 0; }
+        else if (i == MR_DEMO) { if (on && demo_can_restore()) { e[0] = 'O'; e[1] = 'C'; e[2] = 'T'; e[3] = '+'; e[4] = 0; } }
+        else if (i == MR_RESET || i == MR_BT) { if (on) { e[0] = 'O'; e[1] = 'C'; e[2] = 'T'; e[3] = '+'; e[4] = 0; } }
         else { const char *t = "FM-1_032"; while (*t) *e++ = *t++; *e = 0; }
-        txt((i == 0u || i == 1u ? 206 : 220) - text_w(&FONT_S, v), y + 3, v, i == 6u ? RGB(160, 154, 134) : K_AMB);
-        if (on && (i == 0u || i == 1u)) { txt(206 - text_w(&FONT_S, v) - 14, y + 3, "<", K_CORAL); txt(212, y + 3, ">", K_CORAL); }
+        txt((i == MR_CLOCK || i == MR_CHAN || sw ? 206 : 220) - text_w(&FONT_S, v), y + 2, v, i == MR_ABOUT ? RGB(160, 154, 134) : K_AMB);
+        if (on && (i == MR_CLOCK || i == MR_CHAN || sw)) { txt(206 - text_w(&FONT_S, v) - 14, y + 2, "<", K_CORAL); txt(212, y + 2, ">", K_CORAL); }
     }
     if (about_on) {
         rrect_o(20, 56, 200, 150, 6, K_AMB, SK.bg);
@@ -1015,6 +1016,7 @@ static void ui_sec(uint32_t s)
     else if (view == V_SND) { if (s == 1u) snd_body(); else snd_ctrl(); }
     else draw_send();
     if (kit_on && (s == 1u || s == 2u)) draw_kits();
+    if (tip_on && (s == 1u || s == 2u)) draw_tip();
     cv_oy = 0;
     cv_blit(0, (uint32_t)y0);
 }

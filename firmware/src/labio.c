@@ -9,7 +9,10 @@
  * status: 0 ok, 1 stored, 2 not a project, 4 flash failed, 5 out of order, 6 no such slot, 7 empty slot
  * Device only (the fake FM-1 has no SysEx). */
 #ifndef CHIPBOX_HOST
-static void app_install_mark(void) {}                   /* ota.c calls it when an install starts (Chipbox notes it for its quick start; we have nothing to note) */
+static void app_install_mark(void)                      /* ota.c calls it when an install starts: the next start of Drumlab shows the quick start again (if no project of the player's is there) */
+{
+    lset.pad[0] |= QS_INSTALLED; settings_save(&lset, sizeof lset);
+}
 #define PX_CHUNK 200u
 static uint8_t px[PROJ_BANK] POOL_;                     /* the project in transit */
 static uint32_t px_len, px_got, px_slot, px_open_req;   /* px_open_req: slot + 1 to open in the main loop */

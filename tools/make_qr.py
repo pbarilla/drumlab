@@ -5,8 +5,8 @@ Needs segno (pip install segno).   python3 tools/make_qr.py"""
 import os
 import segno
 
-BASE = "https://ihavenocluewhatimdoing.com/chipbox/"
-URLS = [("QR_GUIDE", BASE + "guide/"), ("QR_PROJ", BASE + "projects/"), ("QR_GIT", "https://github.com/pbarilla/chipbox"),
+BASE = "https://ihavenocluewhatimdoing.com/drumlab/"
+URLS = [("QR_GUIDE", BASE + "guide/"), ("QR_PROJ", BASE + "projects/"), ("QR_GIT", "https://github.com/pbarilla/drumlab"),
         ("QR_PLAY", BASE + "play/"), ("QR_SITE", BASE)]
 OUT = os.path.join(os.path.dirname(__file__), "..", "firmware", "gen", "qr.h")
 

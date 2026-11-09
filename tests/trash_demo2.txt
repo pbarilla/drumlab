@@ -1,0 +1,35 @@
+# run 2 on the same flash: slot 1 holds the player's project (no padlock); Restore Demos refuses; clear it; Restore works
+500 held 0x100
+1300 held 0
+1800 shot
+1900 held 0x100
+1960 held 0
+2500 held 0x180
+2600 held 0
+2900 enc 0 7
+3200 shot
+3300 held 0x2
+3360 held 0
+3500 shot
+3600 held 0x100
+3660 held 0
+3800 held 0x100
+4600 held 0
+4900 held 0x40
+5700 held 0
+5800 held 0x2
+5860 held 0
+6200 shot
+6300 held 0x180
+6400 held 0
+6700 enc 0 7
+7000 shot
+7100 held 0x2
+7160 held 0
+7500 shot
+7600 held 0x100
+7660 held 0
+8000 held 0x100
+8800 held 0
+9200 shot
+10500 end

@@ -92,10 +92,11 @@ static int lab_store(uint32_t slot, const uint8_t *buf, uint32_t len)     /* a p
     if (pf_write(base, &nh, sizeof nh)) return -1;
     return 0;
 }
+static uint32_t demo_gone(void);           /* (below, with the settings) */
 static uint8_t bt_locked;                /* the Bluetooth demo is on: a locked project, in memory only (nothing of it is saved; opening a project ends it) */
 static int lab_save(uint32_t slot)       /* stopped and silent: an erase stalls the sound */
 {
-    if (bt_locked || (slot == 0u && demo0)) return 0;           /* the Bluetooth demo and KOROBEINIKI are never saved */
+    if (bt_locked || (slot == 0u && demo0)) return 0;           /* the Bluetooth demo and KOROBEINIKI (while it is there) are never saved */
     return lab_store(slot, lab_buf, lab_pack(lab_buf));
 }
 static void lab_clear(uint32_t slot) { pf_erase(lab_base(slot, 0)); pf_erase(lab_base(slot, 1)); }
@@ -119,17 +120,35 @@ typedef struct { uint8_t magic, slot, sync, chan, flags, pad[3]; } lset_t;
 #define LSET_MAGIC 0xD3u
 #define LF_PO 1u                                /* the pocket operator's LCD skin */
 #define LF_NOBAT 2u
-static lset_t lset = {LSET_MAGIC, 0, 0, 0, 0, {0, 0, 0}};      /* sync: 0 off, 1 send clock, 2 follow clock; chan: 0 any, 1..16 */
+#define QS_OK 0xA0u                             /* lset.pad[0]: the top nibble says the low bits are ours (an older settings blob has 0 there: it reads as the defaults) */
+#define QS_ALWAYS 1u                            /* the quick start at every start */
+#define QS_PICK 2u                              /* the project picker at every start (after the quick start) */
+#define QS_NOTIPS 4u                            /* the idle tips are off (a new device has them on) */
+#define QS_INSTALLED 8u                         /* an install started from here: the next start shows the quick start again, if no project of the player's is there */
+#define DG_OK 0xC0u                             /* lset.pad[1]: the top nibble says bit 0 is ours (an older blob has 0 there: the demo is present) */
+#define DG_GONE 1u                              /* the player deleted the demo in slot 1: it is not made again at start (Restore Demos in the menu, or a factory reset, brings it back) */
+static lset_t lset = {LSET_MAGIC, 0, 0, 0, 0, {QS_OK, DG_OK, 0}};      /* sync: 0 off, 1 send clock, 2 follow clock; chan: 0 any, 1..16 */
 static void lab_slot_note(void) { lset.slot = lab_slot; settings_save(&lset, sizeof lset); }            /* which project was open: it opens again next time */
+static uint32_t demo_gone(void) { return (lset.pad[1] & 0xF0u) == DG_OK && (lset.pad[1] & DG_GONE) != 0u; }
 static void demo_install(void);
 static void demo_sync0(void);
+static uint32_t demo_n(void);                   /* how many slots the demos take (labdemo.c) */
+static uint8_t lab_fresh;                       /* this start is a new device's (or an install's): the quick start opens */
 static void proj_boot(void)
 {
     lset_t t;
     int fresh = 1;
     if (settings_load(&t, sizeof t) == 0 && t.magic == LSET_MAGIC && t.slot < LAB_SLOTS && t.sync < 3u && t.chan < 17u) { lset = t; fresh = 0; }
-    if (fresh) { demo_install(); settings_save(&lset, sizeof lset); }                  /* a new device: the demos go into the empty slots */
+    if ((lset.pad[0] & 0xF0u) != QS_OK) lset.pad[0] = QS_OK;                            /* (a settings blob from before the quick start) */
+    if ((lset.pad[1] & 0xF0u) != DG_OK) lset.pad[1] = DG_OK;                            /* (and from before the demo could be deleted: it is there) */
+    if (fresh) { demo_install(); settings_save(&lset, sizeof lset); lab_fresh = 1; }   /* a new device: the demos go into the empty slots */
     else demo_sync0();                                                                  /* slot 1 is always KOROBEINIKI: made again if it is not exactly this firmware's */
+    if (!fresh && (lset.pad[0] & QS_INSTALLED)) {                                       /* installed from here (to another firmware and back, or an update): fresh again only if no project of the player's is in the slots after the demos */
+        uint32_t s, used = 0;
+        for (s = demo_n(); s < LAB_SLOTS; s++) if (lab_exists(s)) used = 1;
+        lset.pad[0] &= (uint8_t)~QS_INSTALLED; settings_save(&lset, sizeof lset);
+        if (!used) lab_fresh = 1;
+    }
     lab_slot = lset.slot; sync_mode = lset.sync;
     bt_side = lset.flags >> 2 & 1u; bt_patsync = lset.flags >> 3 & 1u; bt_fxsync = lset.flags >> 4 & 1u;            /* Bluetooth sync: bits 0-1 the mode, 2 sidechain, 3 follow patterns */
     lab_loaded = lab_load(lab_slot) == 0;

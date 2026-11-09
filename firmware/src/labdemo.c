@@ -3,6 +3,7 @@
  * play in, in a scratch copy of the project that is put back when you leave). Data: kits/demos.py -> demos.h. */
 #include "demos.h"
 
+static uint32_t demo_n(void) { return NDEMO; }
 static void demo_kit(uint32_t k) { if (k == 0u) kit_lab1(); else kit_preset(k - 1u); }
 static void demo_pat(uint32_t p, const dpat_t *d)
 {
@@ -49,6 +50,7 @@ static void demo_sync0(void)
     lab_hdr_t h;
     int b;
     uint32_t len, f;
+    if (demo_gone()) { demo0 = 0; return; }                              /* the player deleted it: its slot is an ordinary one now (a project of theirs may sit there) */
     demo_load(&demos[0]); len = lab_pack(lab_buf);
     b = lab_newest(0, &h);
     if (b >= 0 && (h.seq & 0x40000000u) && h.len == len && h.crc == lab_crc(lab_buf, len)) { demo0 = 1; return; }
@@ -60,6 +62,13 @@ static void demo_sync0(void)
     }
     lab_seqflag = 0x40000000u; lab_store(0, lab_buf, len); lab_seqflag = 0;
     demo0 = 1;
+}
+static uint32_t demo_can_restore(void) { return demo_gone() && !lab_exists(0); }      /* the demo was deleted and its slot is empty again: a project of the player's there is never overwritten */
+static void demo_restore(void)                                      /* Restore Demos: KOROBEINIKI comes back into its (empty) slot, locked again */
+{
+    if (!demo_can_restore()) return;
+    lset.pad[1] = DG_OK; demo_sync0();
+    settings_save(&lset, sizeof lset);
 }
 static void demo_install(void)                                      /* KOROBEINIKI, and the other demos into the empty slots */
 {

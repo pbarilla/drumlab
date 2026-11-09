@@ -7,7 +7,8 @@ cd "$(dirname "$0")/.." || exit 1
 mkdir -p build/host/asan
 fail=0
 CF="-g -O1 -fsanitize=address,undefined -fno-sanitize-recover=undefined"
-cc $CF -DCHIPBOX_HOST -DAPP_VER='"dev"' -Ifirmware/src -Ifirmware/gen -o build/host/lab_san firmware/src/lab.c -lm 2>/dev/null || { echo "FAIL build lab_san"; exit 1; }
+cc $CF -DLAB_NOQS -DCHIPBOX_HOST -DAPP_VER='"dev"' -Ifirmware/src -Ifirmware/gen -o build/host/lab_san firmware/src/lab.c -lm 2>/dev/null || { echo "FAIL build lab_san"; exit 1; }
+cc $CF -DTIP_IDLE=2000 -DTIP_EVERY=600 -DCHIPBOX_HOST -DAPP_VER='"dev"' -Ifirmware/src -Ifirmware/gen -o build/host/lab_san_qs firmware/src/lab.c -lm 2>/dev/null || { echo "FAIL build lab_san_qs"; exit 1; }
 run() {                                         # run NAME SCRIPT
     rm -rf build/host/asan/$1 build/host/asan/$1.bin; mkdir -p build/host/asan/$1
     HOST_FLASH=build/host/asan/$1.bin timeout 1800 build/host/lab_san build/host/asan/$1/f $2 > build/host/asan/$1.log 2>&1 || { echo "FAIL $1 (exit $?)"; tail -3 build/host/asan/$1.log; fail=1; return; }
@@ -15,6 +16,18 @@ run() {                                         # run NAME SCRIPT
     rm -rf build/host/asan/$1
 }
 for f in tests/lab_*.txt; do run "$(basename $f .txt)" "$f"; done
+runqs() {                                       # runqs NAME SCRIPT FLASH: the quick start / tips / menu switches (the build with the quick start on and short tip times); scripts share one flash file in order
+    rm -rf build/host/asan/$1; mkdir -p build/host/asan/$1
+    HOST_FLASH=build/host/asan/$3.bin timeout 1800 build/host/lab_san_qs build/host/asan/$1/f $2 > build/host/asan/$1.log 2>&1 || { echo "FAIL $1 (exit $?)"; tail -3 build/host/asan/$1.log; fail=1; return; }
+    grep -q "runtime error\|AddressSanitizer" build/host/asan/$1.log && { echo "FAIL $1 (sanitizer)"; fail=1; } || echo "ok   $1"
+    rm -rf build/host/asan/$1
+}
+rm -f build/host/asan/qsflow.bin build/host/asan/qstip.bin
+runqs qs_quick tests/qs_quick.txt qsflow; runqs qs_menu tests/qs_menu.txt qsflow; runqs qs_start tests/qs_start.txt qsflow     # fresh: the quick start; then the menu switches; then a start with the switches on
+rm -f build/host/asan/trashflash.bin
+runqs trash_demo1 tests/trash_demo1.txt trashflash; runqs trash_demo2 tests/trash_demo2.txt trashflash; runqs trash_demo3 tests/trash_demo3.txt trashflash       # delete the demo, a start with it gone (HOME on its tile opens nothing), Restore Demos, a start with it back
+runqs qs_tipclose tests/qs_tipclose.txt qstip; runqs qs_tips tests/qs_tips.txt qstip                                         # the tips (all of them), a touch puts one away
+for m in 1 2 3; do runqs qs_monkey$m tests/lab_monkey$m.txt qsmonkey$m; done                                                  # random input with the quick start and the tips live
 n=0
 while [ $n -lt ${FUZZ:-3} ]; do
     n=$((n + 1)); python3 tests/fuzz.py $n ${FUZZ_SECS:-300} > build/host/asan/fuzz$n.txt; run fuzz$n build/host/asan/fuzz$n.txt

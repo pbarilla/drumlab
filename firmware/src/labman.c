@@ -7,11 +7,21 @@ enum {
     M_OCTD = 1u << 8, M_OCTU = 1u << 9, M_FX = 1u << 10, M_SEL = 1u << 11, M_ENV = 1u << 12, M_LFO = 1u << 13, M_EDIT = 1u << 14, M_GLO = 1u << 15,
     M_HOME = 1u << 16, M_SAVE = 1u << 17, M_ARP = 1u << 18, M_SEQ = 1u << 19, M_PLAY = 1u << 20, M_REC = 1u << 21, M_KEYS = 1u << 22,
     M_KNOBS = M_K1 | M_K2 | M_K3 | M_K4,
-    M_SMALL = 1u << 24, M_NOPANEL = 1u << 25                                    /* the picture small (long text), no picture */
+    M_SMALL = 1u << 24, M_NOPANEL = 1u << 25, M_QR = 1u << 26                   /* the picture small (long text), no picture, the QR code */
 };
+#include "qr.h"
 typedef struct { const char *topic; uint32_t ring; const char *text; } mpage_t;
 typedef struct { const char *name; uint16_t col; const mpage_t *page; uint8_t n; } mchap_t;
 
+static const mpage_t MP_QUICK[] = {                  /* the quick start: shown alone (locked) on a new device */
+    {"", M_GLO | M_SELECT | M_HOME | M_SMALL, "Press GLO at any time to open the manual. Spin SELECT to flip the pages. When you're ready, hit HOME to close this guide!"},
+    {"", M_HOME | M_SELECT | M_SMALL, "Hold HOME to open your projects. Turn SELECT to pick one, then tap HOME to open it. The first ones are demos."},
+    {"", M_KEYS | M_PLAY | M_SMALL, "The 16 keys are your 16 sounds. Press one to hear it. Press PLAY to start the beat, and REC to turn the keys into steps."},
+    {"", M_HOME | M_SMALL, "Tap HOME to flip between PTN, LAB and SEND. Write beats on PTN, shape sounds in LAB, and send it all to your PO-32 from SEND."},
+    {"", M_QR, "Find the full manual at"},
+    {"", M_GLO | M_HOME | M_SMALL, "To see this quick start every time, or to change other settings, press GLO and HOME."},
+    {"", M_NOPANEL, "Make something strange and wonderful. Have fun!"},
+};
 static const mpage_t MP_START[] = {
     {"Play", M_KEYS | M_PLAY, "Press a key to hear a sound. Press PLAY to start the beat."},
     {"Views", M_HOME, "Tap HOME to flip between PTN, LAB and SEND. Hold HOME for your projects."},
@@ -66,15 +76,17 @@ static const mpage_t MP_SEND[] = {
 };
 static const mpage_t MP_PROJ[] = {
     {"Open", M_HOME | M_SELECT | M_SMALL, "Hold HOME for your 12 projects. Turn SELECT to pick one. Tap HOME to open it. Hold HOME to leave without opening."},
-    {"Delete", M_EDIT | M_OCTU | M_SMALL, "Hold EDIT on a project to delete it. Press OCT+ to say yes. Project 1 is a demo and stays."},
-    {"Demo", M_SELECT | M_SMALL, "Project 1 is a locked demo. Play it, tweak it, then open another project. Nothing in it is saved. A new project starts from the LAB-1 kit."},
+    {"Delete", M_EDIT | M_OCTU | M_SMALL, "Hold EDIT on a project or the demo to delete it. Press OCT+ to say yes. A deleted demo leaves project 1 free for your own."},
+    {"Demo", M_SELECT | M_SMALL, "Project 1 is a locked demo. Play it, tweak it, then open another project. Nothing in it is saved. Hold EDIT on it to delete it and use the slot yourself. A new project starts from the LAB-1 kit."},
 };
 static const mpage_t MP_MENU[] = {
     {"Menu", M_GLO | M_HOME | M_SMALL, "Press GLO and HOME together to open the menu. Turn SELECT to pick a row. Press OCT+ or OCT- to change it. HOME closes it."},
     {"MIDI Clock", M_OCTU | M_SMALL, "Press OCT+ or OCT- to switch between Off, Send and Follow. Send gives your tempo to other gear. Follow takes theirs."},
     {"MIDI Channel", M_OCTU | M_SMALL, "Press OCT+ or OCT- to pick ANY, or a channel from 1 to 16. Anything on other channels is ignored. The pads send notes 36 to 51 on channel 10."},
     {"Lessons", M_KNOBS | M_OCTU | M_SMALL, "Turn KNOB 1 to pick a lesson and press OCT+ to start it. Rings show where the hits go. HOME leaves and your project comes back."},
-    {"Reset", M_OCTU | M_SMALL, "Press OCT+ on Factory Reset to ask. OCT+ again says yes, OCT- says no. Yes wipes your projects for good."},
+    {"Switches", M_OCTU | M_SMALL, "Quick Start Always and Projects At Start act when you switch on. Show Tips turns the idle tips on or off. Press OCT+ or OCT- to flip a row."},
+    {"Restore Demos", M_OCTU | M_SMALL, "Press OCT+ on Restore Demos to bring the demo back into project 1. It waits while a project of yours is in that slot."},
+    {"Reset", M_OCTU | M_SMALL, "Press OCT+ on Factory Reset to ask. OCT+ again says yes, OCT- says no. Yes wipes your projects for good and brings the demo back."},
 };
 static const mpage_t MP_BT[] = {
     {"Sync", M_OCTU | M_SMALL, "Open BROTHERS LINK in the menu. Set Sync to Lead on one FM-1 and Follow on the others with OCT+ or OCT-. It is always Off after power-up."},
@@ -84,12 +96,12 @@ static const mpage_t MP_BT[] = {
 };
 #define MC(n, c, p) {n, c, p, sizeof p / sizeof p[0]}
 static const mchap_t MCH[] = {
-    MC("Start", RGB(240, 100, 70), MP_START), MC("Pattern", RGB(250, 190, 60), MP_PTN), MC("Lab", RGB(110, 220, 185), MP_LAB),
+    MC("Quick Start", RGB(110, 220, 185), MP_QUICK), MC("Start", RGB(240, 100, 70), MP_START), MC("Pattern", RGB(250, 190, 60), MP_PTN), MC("Lab", RGB(110, 220, 185), MP_LAB),
     MC("Sounds", RGB(170, 140, 240), MP_SND), MC("Effects", RGB(240, 100, 70), MP_FX), MC("Send", RGB(250, 190, 60), MP_SEND),
     MC("Projects", RGB(110, 220, 185), MP_PROJ), MC("Menu", RGB(170, 140, 240), MP_MENU), MC("Brothers Link", RGB(240, 100, 70), MP_BT),
 };
 #define MCHN (sizeof MCH / sizeof MCH[0])
-enum { MC_START, MC_PTN, MC_LAB, MC_SND, MC_FX, MC_SEND, MC_PROJ, MC_MENU, MC_BT };
+enum { MC_QUICK, MC_START, MC_PTN, MC_LAB, MC_SND, MC_FX, MC_SEND, MC_PROJ, MC_MENU, MC_BT };
 
 /* the FM-1 as the Play online page draws it (1040 x 664, cut off under the buttons): knob and button centres */
 static const int16_t MKN[8][2] = {{139, 187}, {253, 185}, {139, 295}, {253, 295}, {665, 185}, {772, 185}, {880, 185}, {988, 185}};
@@ -100,7 +112,7 @@ static int32_t man_k = 13, man_x0 = 16, man_y0 = 34;      /* the picture's scale
 #define MPY(v) (man_y0 + (((v) - 82) * man_k) / 64)
 #define MZ(n) (((n) * man_k + 6) / 13)
 
-static uint8_t man_ch, man_pg, man_toc;
+static uint8_t man_ch, man_pg, man_toc, man_lock, man_dry;      /* man_lock: the quick start on a new device: its pages only; man_dry: man_lines only measures */
 static void man_ring(int32_t x1, int32_t y1, int32_t x2, int32_t y2)
 {
     cv_rect(x1, y1, x2 - x1, 2, K_CORAL); cv_rect(x1, y2 - 2, x2 - x1, 2, K_CORAL); cv_rect(x1, y1, 2, y2 - y1, K_CORAL); cv_rect(x2 - 2, y1, 2, y2 - y1, K_CORAL);
@@ -135,12 +147,13 @@ static int32_t man_lines(int32_t x, int32_t y, const char *s, int32_t maxw)     
         memcpy(t, ls, n); t[n] = 0;
         if (le != ls && text_w(&FONT_S, t) > maxw) {
             n = (uint32_t)(le - ls); memcpy(t, ls, n); t[n] = 0;
-            txt(x, y, t, K_NAVY); y += 17;
+            if (!man_dry) txt(x, y, t, K_NAVY);
+            y += 17;
             ls = p;
         }
         le = we; p = we;
     }
-    if (le != ls) { uint32_t n = (uint32_t)(le - ls); memcpy(t, ls, n); t[n] = 0; txt(x, y, t, K_NAVY); y += 17; }
+    if (le != ls) { uint32_t n = (uint32_t)(le - ls); memcpy(t, ls, n); t[n] = 0; if (!man_dry) txt(x, y, t, K_NAVY); y += 17; }
     return y;
 }
 static void man_num(char *d, uint32_t a, uint32_t b)         /* "a/b", both under 100 */
@@ -171,10 +184,10 @@ static void scene_man(void)
     if (man_toc) {
         txt(8, 4, "Manual", K_CREAM);
         for (i = 0; i < MCHN; i++) {
-            int32_t y = 34 + (int32_t)i * 19;
+            int32_t y = 33 + (int32_t)i * 17;
             char cn[4];
-            if (i == man_ch) cv_rect(0, y, 240, 18, K_NAVY);
-            cv_rect(8, y + 3, 5, 12, MCH[i].col);
+            if (i == man_ch) cv_rect(0, y, 240, 16, K_NAVY);
+            cv_rect(8, y + 2, 5, 12, MCH[i].col);
             txt(22, y + 1, MCH[i].name, i == man_ch ? K_CREAM : K_NAVY);
             cn[0] = (char)('0' + MCH[i].n / 10u); cn[1] = (char)('0' + MCH[i].n % 10u); cn[2] = 0;
             txt(226 - text_w(&FONT_S, MCH[i].n >= 10u ? cn : cn + 1), y + 1, MCH[i].n >= 10u ? cn : cn + 1, i == man_ch ? K_CREAM : K_NAVY);
@@ -187,30 +200,41 @@ static void scene_man(void)
     man_num(nb, (uint32_t)man_pg + 1u, c->n);
     txt(8, 4, c->name, c->col);
     txt(232 - text_w(&FONT_S, nb), 4, nb, c->col);
-    if (p->ring & M_NOPANEL) man_lines(8, 70, p->text, 224);
+    if (p->ring & M_QR) {                                              /* the code: black on white, with its quiet zone */
+        uint32_t r, q;
+        man_lines(8, 40, p->text, 224);
+        cv_rect(52, 62, (QR_N + 4) * 4, (QR_N + 4) * 4, RGB(255, 255, 255));
+        for (r = 0; r < QR_N; r++) for (q = 0; q < QR_N; q++) if (QR_ROW[QR_GUIDE][r] >> (QR_N - 1u - q) & 1u) cv_rect(52 + 8 + (int32_t)q * 4, 62 + 8 + (int32_t)r * 4, 4, 4, RGB(0, 0, 0));
+    } else if (p->ring & M_NOPANEL) man_lines(8, 70, p->text, 224);
     else {
         int32_t ty = 142, small = (p->ring & M_SMALL) != 0;
         man_k = small ? 7 : 13; man_x0 = small ? 64 : 16; man_y0 = small ? 31 : 34;
         man_panel(p->ring);
-        if (small) { ty = 74; if (p->topic[0]) { txt(8, 72, p->topic, K_CORAL); ty = 90; } }
+        if (small) { ty = 82; if (p->topic[0]) { txt(8, 72, p->topic, K_CORAL); ty = 90; } }
         else if (p->topic[0]) { txt(8, 120, p->topic, K_CORAL); ty = 138; }
         else ty = 120;
         man_lines(8, ty, p->text, 224);
         man_k = 13; man_x0 = 16;
     }
-    {   int32_t st = c->n > 9u ? 7 : 10, d0 = 232 - (int32_t)c->n * st + 4;
+    {   int32_t st = c->n > 9u ? 7 : 10, d0 = man_lock ? 120 - ((int32_t)c->n * st - 4) / 2 : 232 - (int32_t)c->n * st + 4;       /* the dots: centred in the quick start, else at the right with GLO Contents at the left */
         for (i = 0; i < c->n; i++) cv_rect(d0 + (int32_t)i * st, 228, st - 4, 4, i <= man_pg ? K_NAVY : mixc(K_CREAM, K_NAVY, 80));
-        txt(8, 218, "GLO  Contents", K_NAVY);
-        if (man_pg > 0u || man_ch > 0u) txt(d0 - 14, 216, "<", K_NAVY);
-        if ((uint32_t)man_pg + 1u < c->n || (uint32_t)man_ch + 1u < MCHN) txt(228, 216, ">", K_NAVY);
+        if (!man_lock) txt(8, 218, "GLO  Contents", K_NAVY);
+        else { txt(8, 207, "HOME  Close", K_NAVY); txt(232 - text_w(&FONT_S, "OCT-  Hide"), 207, "OCT-  Hide", K_NAVY); }       /* the quick start: HOME leaves it, OCT- leaves it and keeps it away */
+        if (man_pg > 0u || (!man_lock && man_ch > 0u)) txt(man_lock ? 4 : d0 - 14, 216, "<", K_NAVY);
+        if ((uint32_t)man_pg + 1u < c->n || (!man_lock && (uint32_t)man_ch + 1u < MCHN)) txt(228, 216, ">", K_NAVY);
     }
 }
-static void man_open(uint32_t ch, uint32_t pg) { man_ch = (uint8_t)ch; man_pg = (uint8_t)pg; man_toc = 0; help_on = 1; dirty = 1; }
+static void man_open(uint32_t ch, uint32_t pg) { man_ch = (uint8_t)ch; man_pg = (uint8_t)pg; man_toc = 0; man_lock = 0; help_on = 1; dirty = 1; }
 static void man_input(uint32_t bdown)                    /* SELECT turns pages (on into the next chapter), PRESETS jumps chapters, OCT+ opens a chapter from the contents */
 {
     int32_t e = fm1_enc_take(ENC_SELECT), f = fm1_enc_take(ENC_PRESETS);
     (void)fm1_enc_take(ENC_ALGORITHM);
     (void)fm1_enc_take(ENC_KNOB1); (void)fm1_enc_take(ENC_KNOB2); (void)fm1_enc_take(ENC_KNOB3); (void)fm1_enc_take(ENC_KNOB4);
+    if (man_lock) {                                         /* the quick start alone: SELECT turns its pages, nothing else */
+        if (e > 0 && (uint32_t)man_pg + 1u < MCH[man_ch].n) { man_pg++; dirty = 1; }
+        else if (e < 0 && man_pg > 0u) { man_pg--; dirty = 1; }
+        return;
+    }
     if (e && !man_toc) {
         if (e > 0) { if ((uint32_t)man_pg + 1u < MCH[man_ch].n) man_pg++; else if ((uint32_t)man_ch + 1u < MCHN) { man_ch++; man_pg = 0; } }
         else { if (man_pg > 0u) man_pg--; else if (man_ch > 0u) { man_ch--; man_pg = (uint8_t)(MCH[man_ch].n - 1u); } }

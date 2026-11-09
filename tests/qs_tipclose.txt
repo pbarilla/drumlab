@@ -1,0 +1,16 @@
+300 held 0x100
+360 held 0
+600 shot
+2800 shot
+2900 held 0x100
+2960 held 0
+3200 shot
+5600 shot
+5700 keys 0x1
+5760 keys 0
+6000 shot
+6100 held 0x1000
+6160 held 0
+9000 shot
+12500 shot
+13000 end
