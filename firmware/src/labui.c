@@ -227,7 +227,12 @@ static void menu_input(uint32_t bdown)
         return;
     }
     e = fm1_enc_take(ENC_SELECT); if (!e) e = fm1_enc_take(ENC_PRESETS);
-    if (e) menu_sel = (uint8_t)(((int32_t)menu_sel + NMENU + e % NMENU) % NMENU);
+    if (e) {                                                                                    /* (RESTORE DEMOS is hidden until the demo is deleted: the dial steps over it) */
+        int32_t n = e < 0 ? -e : e, dir = e < 0 ? -1 : 1;
+        if (n > NMENU) n = NMENU;
+        while (n-- > 0) { do menu_sel = (uint8_t)((menu_sel + NMENU + dir) % NMENU); while (menu_sel == MR_DEMO && !demo_gone()); }
+    }
+    if (menu_sel == MR_DEMO && !demo_gone()) menu_sel = MR_BAT;
     d = (int32_t)(bdown >> BTN_OCT_UP & 1u) - (int32_t)(bdown >> BTN_OCT_DOWN & 1u);
     if (d) {
         if (menu_sel == MR_LESSONS && d > 0) { les_enter(les_pick); menu_on = 0; view = V_PAT; wr = 1; chainm = 0; pg = 0; sel = 0; home_used = 1; les_t0 = fm1_ms; dirty = 1; return; }
@@ -242,6 +247,7 @@ static void menu_input(uint32_t bdown)
                 demo_restore();
                 if (lab_load(lab_slot) != 0) core_init();
                 lab_loaded = lab_exists(lab_slot); lab_dirty = 0; pv_dirty = 1; set_dirty = 0;
+                menu_sel = MR_BAT;                                                                     /* (the row hides itself again) */
             }
         }
         else if (menu_sel == MR_RESET && d > 0) reset_ask = 1;

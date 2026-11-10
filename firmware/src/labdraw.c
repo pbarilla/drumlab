@@ -963,9 +963,12 @@ static void draw_menu(void)
     static const char *const SYNC[3] = {"OFF", "SEND", "FOLLOW"};
     uint32_t i;
     cv_rect(0, 44, 240, 172, SK.bg);
+    uint32_t vi = 0;                                                                              /* the line shown (RESTORE DEMOS only once the demo was deleted) */
     for (i = 0; i < NMENU; i++) {
-        int32_t y = 46 + (int32_t)i * 15;
+        int32_t y;
         char v[20], *e = v;
+        if (i == MR_DEMO && !demo_gone()) continue;
+        y = 46 + (int32_t)vi++ * 15;
         uint32_t on = i == menu_sel, sw = i == MR_TIPS || i == MR_QS || i == MR_PICK;
         rrect_o(8, y, 224, 14, 3, on ? K_CREAM : K_CHRD, on ? RGB(58, 52, 74) : K_PLATE);
         txt(20, y + 2, i == MR_DEMO && demo_gone() && !demo_can_restore() ? "RESTORE: SLOT 1 IN USE" : LAB[i], on ? K_CREAM : RGB(200, 194, 170));
