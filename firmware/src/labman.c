@@ -19,7 +19,7 @@ static const mpage_t MP_QUICK[] = {                  /* the quick start: shown a
     {"", M_KEYS | M_PLAY | M_SMALL, "The 16 keys are your 16 sounds. Press one to hear it. Press PLAY to start the beat, and REC to turn the keys into steps."},
     {"", M_HOME | M_SMALL, "Tap HOME to flip between PTN, LAB and SEND. Write beats on PTN, shape sounds in LAB, and send it all to your PO-32 from SEND."},
     {"", M_QR, "Find the full manual at"},
-    {"", M_GLO | M_HOME | M_SMALL, "To see this quick start every time, or to change other settings, press GLO and HOME."},
+    {"", M_GLO | M_HOME | M_SMALL, "Press GLO and HOME for the menu. Its Lessons line walks you through the basics, and it holds the quick start and other settings."},
     {"", M_NOPANEL, "Make something strange and wonderful. Have fun!"},
 };
 static const mpage_t MP_START[] = {
@@ -27,6 +27,7 @@ static const mpage_t MP_START[] = {
     {"Views", M_HOME, "Tap HOME to flip between PTN, LAB and SEND. Hold HOME for your projects."},
     {"Save", M_SAVE, "Drumlab saves by itself a few seconds after you stop editing. Press SAVE to be sure."},
     {"Help", M_GLO, "Press GLO on any screen for its help. Turn SELECT to read on. Press HOME to leave."},
+    {"Lessons", M_GLO | M_HOME | M_SMALL, "Press GLO and HOME together, then press OCT+ on LESSONS. Turn SELECT to pick one and press OCT+ to start it."},
 };
 static const mpage_t MP_PTN[] = {
     {"Sounds", M_PRESETS | M_KEYS, "Turn PRESETS to pick one of the 16 sounds. The 16 keys are pads that play them."},
@@ -83,14 +84,14 @@ static const mpage_t MP_MENU[] = {
     {"Menu", M_GLO | M_HOME | M_SMALL, "Press GLO and HOME together to open the menu. Turn SELECT to pick a row. Press OCT+ or OCT- to change it. HOME closes it."},
     {"MIDI Clock", M_OCTU | M_SMALL, "Press OCT+ or OCT- to switch between Off, Send and Follow. Send gives your tempo to other gear. Follow takes theirs."},
     {"MIDI Channel", M_OCTU | M_SMALL, "Press OCT+ or OCT- to pick ANY, or a channel from 1 to 16. Anything on other channels is ignored. The pads send notes 36 to 51 on channel 10."},
-    {"Lessons", M_KNOBS | M_OCTU | M_SMALL, "Turn KNOB 1 to pick a lesson and press OCT+ to start it. Rings show where the hits go. HOME leaves and your project comes back."},
+    {"Lessons", M_KNOBS | M_OCTU | M_SMALL, "Press OCT+ to open the list. A tick marks the lessons you finished. Turn SELECT to pick one and press OCT+ to start it. A card says what to do and goes green when you have. GLO hides it. GLO + HOME leaves and your project comes back."},
     {"Switches", M_OCTU | M_SMALL, "Quick Start Always and Projects At Start act when you switch on. Show Tips turns the idle tips on or off. Press OCT+ or OCT- to flip a row."},
     {"Restore Demos", M_OCTU | M_SMALL, "Press OCT+ on Restore Demos to bring the demo back into project 1. It waits while a project of yours is in that slot."},
     {"Reset", M_OCTU | M_SMALL, "Press OCT+ on Factory Reset to ask. OCT+ again says yes, OCT- says no. Yes wipes your projects for good and brings the demo back."},
 };
 static const mpage_t MP_BT[] = {
     {"Sync", M_OCTU | M_SMALL, "Open BROTHERS LINK in the menu. Set Sync to Lead on one FM-1 and Follow on the others with OCT+ or OCT-. It is always Off after power-up."},
-    {"Options", M_OCTU | M_SMALL, "Turn SELECT to pick a row. Sidechain ducks a follower on every kick of the leader. Patterns follows the leader's pattern."},
+    {"Options", M_OCTU | M_SMALL, "Turn SELECT to pick a row. Sidechain ducks a follower on every kick of the leader. Patterns follows the leader's pattern and skips one with nothing in it."},
     {"Punch-in FX", M_FX | M_SMALL, "With Punch-in FX On, pads 1 to 8 held on the leader play on every follower too."},
     {"Demo", M_OCTU | M_SMALL, "Demo loads a locked beat to play along with. Nothing in it is saved. Open any project to leave it."},
 };

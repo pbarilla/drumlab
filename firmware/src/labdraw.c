@@ -342,7 +342,7 @@ static void draw_header(void)
     if (lt) { cv_rect(0, 42, 240, 2, K_CHR); cv_rect(0, 44, 240, 1, K_CHRD); }
     else { cv_rect(0, 42, 240, 2, K_CORAL); rrect_o(46, 2, 150, 38, 6, K_CHRD, K_PLATE); }
     atom(atom_n(), lt ? K_NAVY : K_BG, lt ? K_TEAL : K_MINT, atom_ph);
-    if (menu_on) { txt(60, 12, "MENU", K_CREAM); nixie(bpm); return; }
+    if (menu_on) { txt(60, 12, menu_grp == 0u ? "MENU" : menu_grp == 1u ? "SETTINGS" : menu_grp == 2u ? "SYNC AND LINK" : "RESET", K_CREAM); nixie(bpm); return; }
     if (pick_on) { txt(60, 12, "PROJECTS", K_CREAM); nixie(bpm); return; }
     if (help_on) { nixie(bpm); return; }
     if (view == V_PAT) {
@@ -537,10 +537,57 @@ static void draw_lesson(void)                                       /* the lesso
     rrect_o(6, 152, 228, 62, 6, les_done ? K_MINT : K_CHRD, K_PLATE);
     e = t; *e++ = (char)('0' + les_i + 1u); *e++ = '/'; *e++ = (char)('0' + NLESSON); *e = 0;
     txt(18, 156, l->name, K_AMB); txt(222 - text_w(&FONT_S, t), 156, t, RGB(160, 154, 134));
-    if (les_done) { txt(18, 173, "NICE!", K_MINT); txt(222 - text_w(&FONT_S, "OCT+ Next"), 173, "OCT+ Next", K_CREAM); }
+    if (les_done) { txt(18, 173, "NICE!", K_MINT); txt(222 - text_w(&FONT_S, "OCT+ Next  OCT- Done"), 173, "OCT+ Next  OCT- Done", K_CREAM); }
     else txt(18, 173, l->tip, K_CREAM);
     seg = n ? h * 20u / n : 0u;
     for (i = 0; i < 20u; i++) cv_rect(18 + (int32_t)i * 10, 194, 8, 10, i < seg ? K_MINT : RGB(46, 44, 58));
+}
+static void draw_gltab(void)                                        /* the lesson is put away (GLO): a small tab at the top */
+{
+    char t[16], *e = t;
+    const glesson_t *g = &GLESSON[les_i - NLESSON];
+    const char *w = "LESSON ";
+    while (*w) *e++ = *w++;
+    e = numu(e, (uint32_t)gl_step + (les_done ? 0u : 1u)); *e++ = '/'; e = numu(e, g->n); *e = 0;
+    rrect_o(116, 2, 118, 18, 4, K_AMB, K_PLATE);
+    txt(124, 5, t, K_AMB);
+}
+static void draw_read(void)                                         /* a masterclass page: a window over the view, the title, the text, OCT+ next */
+{
+    const glesson_t *g = &GLESSON[les_i - NLESSON];
+    const gstep_t *st = &g->s[gl_step];
+    char ct[12], ln[34], *e = ct;
+    const char *p = st->t;
+    int32_t y = 68;
+    e = numu(e, (uint32_t)gl_step + 1u); *e++ = '/'; e = numu(e, g->n); *e = 0;
+    rrect_o(6, 46, 228, 168, 6, K_AMB, K_PLATE);
+    txt(18, 50, st->title, K_AMB);
+    txt(222 - text_w(&FONT_S, ct), 50, ct, RGB(160, 154, 134));
+    cv_rect(16, 64, 208, 1, K_CHRD);
+    while (*p && y < 190) {
+        uint32_t n = 0;
+        while (*p && *p != '\n' && n < 32u) ln[n++] = *p++;
+        ln[n] = 0;
+        if (*p == '\n') p++;
+        txt(18, y, ln, K_CREAM);
+        y += 12;
+    }
+    txt(18, 196, "OCT+ NEXT", K_AMB); txt(222 - text_w(&FONT_S, "HOME HIDE"), 196, "HOME HIDE", RGB(160, 154, 134));
+}
+static void draw_glcard(void)                                       /* the guided lesson's card, at the top so the knobs stay in view: name, what to do, how far you are */
+{
+    const glesson_t *g = &GLESSON[les_i - NLESSON];
+    uint32_t i, seg, done = (uint32_t)gl_step + (gl_ok || les_done ? 1u : 0u);
+    char t[16], *e = t;
+    rrect_o(6, 0, 228, 62, 6, les_done || gl_ok ? K_MINT : K_CHRD, K_PLATE);
+    { uint32_t k = les_i - NLESSON + 1u; if (k >= 10u) *e++ = (char)('0' + k / 10u); *e++ = (char)('0' + k % 10u); *e++ = '/'; *e++ = (char)('0' + NGL / 10u); *e++ = (char)('0' + NGL % 10u); *e = 0; }
+    txt(222 - text_w(&FONT_S, t), 4, t, RGB(160, 154, 134));
+    txt(18, 4, g->name, K_AMB);
+    if (les_done) { txt(18, 21, "THAT'S IT!", K_MINT); txt(222 - text_w(&FONT_S, "OCT+ Next  OCT- Done"), 21, "OCT+ Next  OCT- Done", K_CREAM); }
+    else if (gl_ok) txt(18, 21, GL_PRAISE[(les_i * 5u + gl_step * 3u) % 9u], K_MINT);
+    else txt(18, 21, g->s[gl_step].t, K_CREAM);
+    seg = done * 20u / g->n;
+    for (i = 0; i < 20u; i++) cv_rect(18 + (int32_t)i * 10, 42, 8, 10, i < seg ? K_MINT : RGB(46, 44, 58));
 }
 static void pat_ctrl(void)
 {
@@ -549,7 +596,7 @@ static void pat_ctrl(void)
     uint32_t v[4];
     char b[8];
     if (fx_layer) { draw_fx(); return; }
-    if (les_on) { draw_lesson(); return; }
+    if (les_on && !gl_active()) { draw_lesson(); return; }
     if (chainm) { draw_chain(); return; }
     v[0] = (bpm - 60u) * 255u / 180u; v[1] = (uint32_t)swing * 255u / 12u; v[2] = knob[sel][0]; v[3] = knob[sel][1];
     for (i = 0; i < 4u; i++) {
@@ -956,33 +1003,72 @@ static void draw_bt(void)
         if (on) { txt(206 - text_w(&FONT_S, val[i]) - 14, y + 6, "<", K_CORAL); txt(212, y + 6, ">", K_CORAL); }
     }
 }
+static void draw_lessons(void)                                      /* the lessons list: a tick and mint text on the ones you finished */
+{
+    uint32_t i, top;
+    char t[16], *e = t;
+    cv_rect(0, 44, 240, 172, SK.bg);
+    top = les_ltop;
+    if (les_pick < top) top = les_pick; else if (les_pick >= top + 7u) top = les_pick - 6u;
+    les_ltop = top;
+    txt(10, 46, "LESSONS", K_AMB);
+    e = numu(e, les_ndone()); *e++ = '/'; e = numu(e, LES_ALL); *e = 0;
+    txt(228 - text_w(&FONT_S, t), 46, t, RGB(160, 154, 134));
+    for (i = 0; i < 7u && top + i < LES_ALL; i++) {
+        const uint32_t n = top + i, on = n == les_pick, dn = les_isdone(n);
+        const int32_t y = 62 + (int32_t)i * 18;
+        rrect_o(8, y, 218, 17, 3, on ? K_CREAM : K_CHRD, on ? RGB(58, 52, 74) : K_PLATE);
+        if (dn) { cv_rect(16, y + 8, 2, 2, K_MINT); cv_rect(18, y + 10, 2, 2, K_MINT); cv_rect(20, y + 8, 2, 2, K_MINT); cv_rect(22, y + 6, 2, 2, K_MINT); cv_rect(24, y + 4, 2, 2, K_MINT); }
+        else { cv_rect(15, y + 3, 11, 1, RGB(90, 86, 100)); cv_rect(15, y + 13, 11, 1, RGB(90, 86, 100)); cv_rect(15, y + 3, 1, 11, RGB(90, 86, 100)); cv_rect(25, y + 3, 1, 11, RGB(90, 86, 100)); }
+        txt(34, y + 1, les_name(n), on ? K_CREAM : dn ? K_MINT : les_ismc(n) ? K_AMB : RGB(200, 194, 170));       /* (a masterclass in gold) */
+    }
+    {   const int32_t th = 7 * 18 - 4, len = th * 7 / (int32_t)LES_ALL, at = (th - len) * (int32_t)top / (int32_t)(LES_ALL - 7u);
+        cv_rect(234, 62, 2, th, K_CHRD); cv_rect(234, 62 + at, 2, len, K_AMB);
+    }
+    txt(10, 194, "OCT+ START", K_AMB); txt(230 - text_w(&FONT_S, "HOME CLOSE"), 194, "HOME CLOSE", RGB(160, 154, 134));
+}
 static void draw_menu(void)
 {
     if (bt_on) { draw_bt(); return; }
-    static const char *const LAB[NMENU] = {"MIDI CLOCK", "MIDI CHANNEL", "LESSONS", "SHOW TIPS", "QUICK START ALWAYS", "PROJECTS AT START", "BATTERY", "RESTORE DEMOS", "FACTORY RESET", "BROTHERS LINK", "ABOUT"};
+    if (les_list_on) { draw_lessons(); return; }
+    static const char *const LAB[NMENU] = {"MIDI CLOCK", "MIDI CHANNEL", "LESSONS", "SHOW TIPS", "QUICK START ALWAYS", "PROJECTS AT START", "BATTERY", "RESTORE DEMOS", "FACTORY RESET", "BROTHERS LINK", "ABOUT", "SETTINGS", "SYNC AND LINK", "RESET"};
     static const char *const SYNC[3] = {"OFF", "SEND", "FOLLOW"};
     uint32_t i;
     cv_rect(0, 44, 240, 172, SK.bg);
-    uint32_t vi = 0;                                                                              /* the line shown (RESTORE DEMOS only once the demo was deleted) */
-    for (i = 0; i < NMENU; i++) {
+    uint8_t rows[8];
+    const uint32_t vis_n = menu_rows(rows);
+    uint32_t sel_vi = 0, k;
+    static uint32_t top;                                                                          /* nine lines of 18 px fit: the list scrolls with the bar */
+    for (k = 0; k < vis_n; k++) if (rows[k] == menu_sel) sel_vi = k;
+    if (sel_vi < top) top = sel_vi;
+    if (sel_vi >= top + 9u) top = sel_vi - 8u;
+    if (top + 9u > vis_n) top = vis_n > 9u ? vis_n - 9u : 0u;
+    for (k = 0; k < vis_n; k++) {
         int32_t y;
         char v[20], *e = v;
-        if (i == MR_DEMO && !demo_gone()) continue;
-        y = 46 + (int32_t)vi++ * 15;
+        const uint32_t slot = k;
+        i = rows[k];
+        if (slot < top || slot >= top + 9u) continue;
+        y = 46 + (int32_t)(slot - top) * 18;
         uint32_t on = i == menu_sel, sw = i == MR_TIPS || i == MR_QS || i == MR_PICK;
-        rrect_o(8, y, 224, 14, 3, on ? K_CREAM : K_CHRD, on ? RGB(58, 52, 74) : K_PLATE);
-        txt(20, y + 2, i == MR_DEMO && demo_gone() && !demo_can_restore() ? "RESTORE: SLOT 1 IN USE" : LAB[i], on ? K_CREAM : RGB(200, 194, 170));
+        rrect_o(8, y, 224, 17, 3, on ? K_CREAM : K_CHRD, on ? RGB(58, 52, 74) : K_PLATE);
+        txt(20, y + 1, i == MR_DEMO && demo_gone() && !demo_can_restore() ? "RESTORE: SLOT 1 IN USE" : LAB[i], on ? K_CREAM : RGB(200, 194, 170));
         v[0] = 0;
-        if (i == MR_CLOCK) { const char *t = SYNC[lset.sync]; while (*t) *e++ = *t++; *e = 0; }
+        if (i >= MR_GSET) { if (on) { e[0] = 'O'; e[1] = 'C'; e[2] = 'T'; e[3] = '+'; e[4] = 0; } }
+        else if (i == MR_CLOCK) { const char *t = SYNC[lset.sync]; while (*t) *e++ = *t++; *e = 0; }
         else if (i == MR_CHAN) { if (!lset.chan) { e[0] = 'A'; e[1] = 'N'; e[2] = 'Y'; e[3] = 0; } else numu(e, lset.chan); }
-        else if (i == MR_LESSONS) { const char *t = lessons[les_pick].name; while (*t) *e++ = *t++; *e = 0; }
+        else if (i == MR_LESSONS) { e = numu(e, les_ndone()); *e++ = '/'; e = numu(e, LES_ALL); *e = 0; }
         else if (sw) { uint32_t yes = i == MR_TIPS ? !(lset.pad[0] & QS_NOTIPS) : (lset.pad[0] & (i == MR_QS ? QS_ALWAYS : QS_PICK)) != 0u; const char *t = yes ? "YES" : "NO"; while (*t) *e++ = *t++; *e = 0; }
         else if (i == MR_BAT) { e = numu(e, bat_pct); *e++ = '%'; *e = 0; }
         else if (i == MR_DEMO) { if (on && demo_can_restore()) { e[0] = 'O'; e[1] = 'C'; e[2] = 'T'; e[3] = '+'; e[4] = 0; } }
         else if (i == MR_RESET || i == MR_BT) { if (on) { e[0] = 'O'; e[1] = 'C'; e[2] = 'T'; e[3] = '+'; e[4] = 0; } }
         else { const char *t = "FM-1_032"; while (*t) *e++ = *t++; *e = 0; }
-        txt((i == MR_CLOCK || i == MR_CHAN || sw ? 206 : 220) - text_w(&FONT_S, v), y + 2, v, i == MR_ABOUT ? RGB(160, 154, 134) : K_AMB);
-        if (on && (i == MR_CLOCK || i == MR_CHAN || sw)) { txt(206 - text_w(&FONT_S, v) - 14, y + 2, "<", K_CORAL); txt(212, y + 2, ">", K_CORAL); }
+        txt((i == MR_CLOCK || i == MR_CHAN || sw ? 206 : 220) - text_w(&FONT_S, v), y + 1, v, i == MR_ABOUT ? RGB(160, 154, 134) : K_AMB);
+        if (on && (i == MR_CLOCK || i == MR_CHAN || sw)) { txt(206 - text_w(&FONT_S, v) - 14, y + 1, "<", K_CORAL); txt(212, y + 1, ">", K_CORAL); }
+    }
+    if (vis_n > 9u) {                                                                                 /* more lines than fit: a thin bar on the right, the part on show lit */
+        const int32_t th = 162 * 9 / (int32_t)vis_n, ty = 46 + (162 - th) * (int32_t)top / (int32_t)(vis_n - 9u);
+        cv_rect(236, 46, 2, 162, K_CHRD); cv_rect(236, ty, 2, th, K_AMB);
     }
     if (about_on) {
         rrect_o(20, 56, 200, 150, 6, K_AMB, SK.bg);
@@ -1018,6 +1104,9 @@ static void ui_sec(uint32_t s)
     else if (view == V_PAT) { if (s == 1u) pat_body(); else pat_ctrl(); }
     else if (view == V_SND) { if (s == 1u) snd_body(); else snd_ctrl(); }
     else draw_send();
+    if (s < 2u && gl_card()) draw_glcard();                           /* (the card sits over the top, so the knobs stay in view) */
+    if (s == 0u && gl_active() && gl_hide) draw_gltab();              /* put away: a small tab stays */
+    if ((s == 1u || s == 2u) && gl_reading()) draw_read();            /* a masterclass page */
     if (kit_on && (s == 1u || s == 2u)) draw_kits();
     if (tip_on && (s == 1u || s == 2u)) draw_tip();
     cv_oy = 0;
@@ -1120,13 +1209,13 @@ static void ui_draw(void)
         for (s = 0; s < 4u; s++) if (m >> s & 1u) ui_sec(s);
         return;
     }
-    if (view == V_PAT && !fx_layer && !help_on && !pick_on && !menu_on && !po_active() && sq_run && st != last_step) {          /* the seek head: one column and the one it left */
+    if (view == V_PAT && !fx_layer && !help_on && !pick_on && !menu_on && !po_active() && !gl_over() && sq_run && st != last_step) {          /* the seek head: one column and the one it left */
         if (last_step < 16u) ui_col(last_step, 0);
         ui_col(st, 1);
         last_step = st;
     } else if (!sq_run) last_step = st;
-    if (map_dirty && !help_on && !pick_on && !menu_on && view != V_PAT) { map_dirty = 0; ui_map(); }
-    if (fm1_ms - atom_ms >= 60u) { atom_ms = fm1_ms; if (!po_active() && !help_on) ui_atom(); }
+    if (map_dirty && !help_on && !pick_on && !menu_on && !gl_over() && view != V_PAT) { map_dirty = 0; ui_map(); }
+    if (fm1_ms - atom_ms >= 60u) { atom_ms = fm1_ms; if (!po_active() && !help_on && !gl_over()) ui_atom(); }
 }
 
 static void ui_leds(void)

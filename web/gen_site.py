@@ -617,6 +617,8 @@ def guide():
         d.block("<p>%s.</p>" % les),
         I("`HOME` leaves. Your project comes back as it was."),
         I("When every ring is filled, `OCT+` starts the next lesson."),
+        d.block("<p>After those six come eighteen guided lessons. A card over the controls says what to do with your hands and goes green when you have done it. <code>GLO</code> puts the card away and brings it back. <code>GLO</code> + <code>HOME</code> leaves, and your project comes back as it was.</p>"),
+        d.block("<p>%s.</p>" % ", ".join("<code>%s</code>" % x for x in ("GET AROUND", "PLAY A PAD", "YOUR FIRST BEAT", "SOUNDS", "ACCENTS", "TEMPO AND SWING", "PITCH AND MORPH", "PATTERNS", "CHAIN PATTERNS", "MUTE AND SOLO", "PUNCH-IN FX", "UNDO AND CLEAR", "SOUND LAB", "PATCH A AND B", "ROLL A KIT", "SOUND ENGINES", "SEND TO THE PO-32", "A BEAT FROM ZERO"))),
         id="lessons",
     )
     d.section(
@@ -960,7 +962,7 @@ def t_patterns(d):
         '  <section class="step">\n    <h2><b>&#9835;</b>Lessons on the device</h2>\n%s\n%s\n  </section>'
         % (
             d.item(
-                "The menu has these grooves as lessons. Hit `GLO` + `HOME`, turn `SELECT` to LESSONS, pick one with `KNOB 1` and hit `OCT+`.",
+                "The menu has these grooves as lessons. Hit `GLO` + `HOME`, turn `SELECT` to LESSONS and hit `OCT+` for the list, with a tick on the lessons you finished. Pick one with `SELECT` and hit `OCT+`.",
                 "l-row",
             ),
             d.item(

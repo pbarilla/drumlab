@@ -99,7 +99,8 @@ static void send_start(void)
 #define QS_ON 1
 #endif
 static uint32_t act_ms;                                      /* the last touch (a button, a key, a knob): the tips wait for it to be old */
-static int32_t enc_act(uint32_t e) { int32_t v = fm1_enc_take(e); if (v) act_ms = fm1_ms; return v; }
+static uint32_t les_kclk, gl_fineturns;                                    /* knob clicks so far (a lesson's knob step wants a few) */
+static int32_t enc_act(uint32_t e) { int32_t v = fm1_enc_take(e); if (v) { act_ms = fm1_ms; if (e >= ENC_KNOB1 && e <= ENC_KNOB1 + 3u) les_kclk += (uint32_t)(v < 0 ? -v : v); } return v; }
 #define fm1_enc_take enc_act                                 /* (every knob read below counts as a touch) */
 #include "labui.c"
 
@@ -168,7 +169,7 @@ static void app_main(void)
         ui_input(keys, kdown, kup, b, bdown, bup);
         tip_tick();
 #ifndef CHIPBOX_HOST
-        if (px_open_req) { uint32_t os = px_open_req - 1u; px_open_req = 0; if (os < LAB_SLOTS) { help_on = menu_on = pick_on = kit_on = 0; if (les_on) les_exit(); lab_open(os); view = V_PAT; sel = 0; pv_dirty = 1; pv_t = fm1_ms; dirty = 1; } }
+        if (px_open_req) { uint32_t os = px_open_req - 1u; px_open_req = 0; if (os < LAB_SLOTS) { help_on = menu_on = pick_on = kit_on = 0; if (les_on) les_leave(); lab_open(os); view = V_PAT; sel = 0; pv_dirty = 1; pv_t = fm1_ms; dirty = 1; } }
 #endif
         { uint32_t nm = 0;
         while (nm < 64u && midi_get(&st, &d1, &d2)) {                      /* a few a turn: a flood must not keep the loop from drawing, the heartbeat and the next turn (the host is NAKed while the ring is full) */

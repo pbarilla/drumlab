@@ -266,7 +266,7 @@ static void core_audio(int32_t *out, uint32_t n)
             brothers_lead_set(sq_pat, km, bfx_local, 0, (uint32_t)swing * 8u / 3u);
         } else if (brothers_mode == 2u && bt_patsync) {         /* a follower: the leader's pattern, at the next bar */
             uint32_t p = brothers_pat();
-            if (p != 0xFFu && p != bt_lastpat) { bt_lastpat = (uint8_t)p; if (!chain_n) cur_pat = (uint8_t)p; }
+            if (p != 0xFFu && p != bt_lastpat) { bt_lastpat = (uint8_t)p; if (!chain_n && p < NPAT) { uint32_t l, s, any = 0; for (l = 0; l < 4u; l++) for (s = 0; s < 16u; s++) any |= pat[p].trig[l][s] & 15u; if (any) cur_pat = (uint8_t)p; } }       /* (out of range, or a pattern with nothing in it: stay where we are) */
         } else bt_lastpat = 0xFFu;
         due = fol_ticks(n); ext = (sync_mode == 2u || brothers_mode == 2u) && fol_on;
         len = sq_len;

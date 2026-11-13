@@ -116,7 +116,9 @@ static void lab_preview(uint32_t slot, uint16_t rows[4])
 
 static void lab_edited(void) { lab_dirty = 1; lab_t_edit = fm1_ms; }
 /* what is remembered across power-offs (one flash sector, 8 bytes): the open project, MIDI sync and channel, a few switches */
-typedef struct { uint8_t magic, slot, sync, chan, flags, pad[3]; } lset_t;
+typedef struct { uint8_t magic, slot, sync, chan, flags, pad[3], les[8]; } lset_t;       /* les: the lessons you finished, a bit each (the 8 and 12 byte blobs from before still load) */
+typedef struct { uint8_t magic, slot, sync, chan, flags, pad[3], les[4]; } lset_mid_t;
+typedef struct { uint8_t magic, slot, sync, chan, flags, pad[3]; } lset_old_t;
 #define LSET_MAGIC 0xD3u
 #define LF_PO 1u                                /* the pocket operator's LCD skin */
 #define LF_NOBAT 2u
@@ -127,7 +129,8 @@ typedef struct { uint8_t magic, slot, sync, chan, flags, pad[3]; } lset_t;
 #define QS_INSTALLED 8u                         /* an install started from here: the next start shows the quick start again, if no project of the player's is there */
 #define DG_OK 0xC0u                             /* lset.pad[1]: the top nibble says bit 0 is ours (an older blob has 0 there: the demo is present) */
 #define DG_GONE 1u                              /* the player deleted the demo in slot 1: it is not made again at start (Restore Demos in the menu, or a factory reset, brings it back) */
-static lset_t lset = {LSET_MAGIC, 0, 0, 0, 0, {QS_OK, DG_OK, 0}};      /* sync: 0 off, 1 send clock, 2 follow clock; chan: 0 any, 1..16 */
+static lset_t lset = {LSET_MAGIC, 0, 0, 0, 0, {QS_OK, DG_OK, 0}, {0}};
+static uint8_t les_dn[8];                       /* (a copy of lset.les) */      /* sync: 0 off, 1 send clock, 2 follow clock; chan: 0 any, 1..16 */
 static void lab_slot_note(void) { lset.slot = lab_slot; settings_save(&lset, sizeof lset); }            /* which project was open: it opens again next time */
 static uint32_t demo_gone(void) { return (lset.pad[1] & 0xF0u) == DG_OK && (lset.pad[1] & DG_GONE) != 0u; }
 static void demo_install(void);
@@ -137,8 +140,12 @@ static uint8_t lab_fresh;                       /* this start is a new device's 
 static void proj_boot(void)
 {
     lset_t t;
+    lset_mid_t mid;
     int fresh = 1;
     if (settings_load(&t, sizeof t) == 0 && t.magic == LSET_MAGIC && t.slot < LAB_SLOTS && t.sync < 3u && t.chan < 17u) { lset = t; fresh = 0; }
+    else if (settings_load(&mid, sizeof mid) == 0 && mid.magic == LSET_MAGIC && mid.slot < LAB_SLOTS && mid.sync < 3u && mid.chan < 17u) { memcpy(&lset, &mid, sizeof mid); fresh = 0; }
+    else { lset_old_t o; if (settings_load(&o, sizeof o) == 0 && o.magic == LSET_MAGIC && o.slot < LAB_SLOTS && o.sync < 3u && o.chan < 17u) { memcpy(&lset, &o, sizeof o); fresh = 0; } }
+    memcpy(les_dn, lset.les, sizeof les_dn);
     if ((lset.pad[0] & 0xF0u) != QS_OK) lset.pad[0] = QS_OK;                            /* (a settings blob from before the quick start) */
     if ((lset.pad[1] & 0xF0u) != DG_OK) lset.pad[1] = DG_OK;                            /* (and from before the demo could be deleted: it is there) */
     if (fresh) { demo_install(); settings_save(&lset, sizeof lset); lab_fresh = 1; }   /* a new device: the demos go into the empty slots */

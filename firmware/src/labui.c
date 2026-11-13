@@ -22,8 +22,18 @@ static const char *const DISC[4][3] = {{"SIN", "TRI", "SAW"}, {"DECAY", "SINE", 
 static int disc_of(uint32_t idx) { return idx == 0 ? 0 : idx == 4 ? 1 : idx == 7 ? 2 : idx == 10 ? 3 : -1; }
 
 /* ---- state */
-#define NMENU 11
-enum { MR_CLOCK, MR_CHAN, MR_LESSONS, MR_TIPS, MR_QS, MR_PICK, MR_BAT, MR_DEMO, MR_RESET, MR_BT, MR_ABOUT };      /* the menu's rows (GLO + HOME) */
+enum { MR_CLOCK, MR_CHAN, MR_LESSONS, MR_TIPS, MR_QS, MR_PICK, MR_BAT, MR_DEMO, MR_RESET, MR_BT, MR_ABOUT, MR_GSET, MR_GSYNC, MR_GRST };      /* the menu's rows (GLO + HOME) */
+#define NMENU 14
+static uint8_t menu_grp;                                                                        /* 0 the top, 1 Settings, 2 Sync and Link, 3 Reset */
+static uint32_t menu_rows(uint8_t *r)                                                           /* the rows of the open group (RESTORE DEMOS only once the demo was deleted) */
+{
+    uint32_t n = 0;
+    if (menu_grp == 0u) { r[n++] = MR_LESSONS; r[n++] = MR_GSET; r[n++] = MR_GSYNC; r[n++] = MR_GRST; }
+    else if (menu_grp == 1u) { r[n++] = MR_TIPS; r[n++] = MR_QS; r[n++] = MR_PICK; r[n++] = MR_BAT; r[n++] = MR_ABOUT; }
+    else if (menu_grp == 2u) { r[n++] = MR_CLOCK; r[n++] = MR_CHAN; r[n++] = MR_BT; }
+    else { if (demo_gone()) r[n++] = MR_DEMO; r[n++] = MR_RESET; }
+    return n;
+}
 static uint8_t qs_pick;                                         /* Projects At Start: the picker opens when the quick start is put away (or at once when there is none) */
 static uint8_t view, sel, pg, side, wr, accm, mutem, chainm, fx_layer, aud_loop;     /* mutem: 0 off, 1 mute, 2 solo */
 static uint8_t fx_lamp;
@@ -127,6 +137,7 @@ static void param_turn(uint32_t idx, int32_t d)
         x = (int32_t)*v + d * (fine ? (d > 3 || d < -3 ? 330 : 110) : (d > 3 || d < -3 ? 3400 : 1100));
         *v = (uint16_t)(x < 0 ? 0 : x > 65535 ? 65535 : x);
     }
+    if (fine) gl_fineturns++;
     pv_dirty = 1; pv_t = fm1_ms; dsec |= SEC_CTRL;
     lab_edited();
 }
@@ -167,6 +178,7 @@ static void pv_step(void)
 static void scene_man(void);
 static void draw_tip(void);
 static uint8_t tip_on;
+#include "lablesson.c"
 #include "labdraw.c"
 #include "labman.c"
 #include "labtips.c"
@@ -204,7 +216,6 @@ static void bt_input(uint32_t bdown)
 static void menu_input(uint32_t bdown)
 {
     int32_t e, d;
-    { int32_t k = fm1_enc_take(ENC_KNOB1); if (k && menu_sel == MR_LESSONS) les_pick = (uint32_t)(((int32_t)les_pick + NLESSON + k % NLESSON) % NLESSON); }
     (void)fm1_enc_take(ENC_ALGORITHM); (void)fm1_enc_take(ENC_KNOB2); (void)fm1_enc_take(ENC_KNOB3); (void)fm1_enc_take(ENC_KNOB4);
     dirty = 1;
     if (bt_on) { bt_input(bdown); return; }
@@ -220,22 +231,25 @@ static void menu_input(uint32_t bdown)
         (void)fm1_enc_take(ENC_SELECT); (void)fm1_enc_take(ENC_PRESETS);
         return;
     }
-    if (bdown & (1u << BTN_HOME | 1u << BTN_GLO)) {                     /* leave: what changed is kept */
+    if (bdown & (1u << BTN_HOME | 1u << BTN_GLO)) {                     /* leave: what changed is kept (inside a group: HOME goes up a level first) */
+        if (menu_grp) { menu_sel = (uint8_t)(MR_GSET + menu_grp - 1u); menu_grp = 0; (void)fm1_enc_take(ENC_SELECT); (void)fm1_enc_take(ENC_PRESETS); return; }
         menu_on = 0; home_used = 1;
         if (set_dirty && !sq_run) { settings_save(&lset, sizeof lset); set_dirty = 0; }
         (void)fm1_enc_take(ENC_SELECT); (void)fm1_enc_take(ENC_PRESETS);
         return;
     }
-    e = fm1_enc_take(ENC_SELECT); if (!e) e = fm1_enc_take(ENC_PRESETS);
-    if (e) {                                                                                    /* (RESTORE DEMOS is hidden until the demo is deleted: the dial steps over it) */
-        int32_t n = e < 0 ? -e : e, dir = e < 0 ? -1 : 1;
-        if (n > NMENU) n = NMENU;
-        while (n-- > 0) { do menu_sel = (uint8_t)((menu_sel + NMENU + dir) % NMENU); while (menu_sel == MR_DEMO && !demo_gone()); }
+    {   uint8_t rows[8];
+        const uint32_t rn = menu_rows(rows);
+        uint32_t at = 0, k;
+        for (k = 0; k < rn; k++) if (rows[k] == menu_sel) at = k;
+        e = fm1_enc_take(ENC_SELECT); if (!e) e = fm1_enc_take(ENC_PRESETS);
+        if (e) { int32_t n = e < 0 ? -e : e; if (n > (int32_t)rn) n = (int32_t)rn; while (n-- > 0) at = (at + rn + (e < 0 ? -1u : 1u)) % rn; }
+        menu_sel = rows[at];
     }
-    if (menu_sel == MR_DEMO && !demo_gone()) menu_sel = MR_BAT;
     d = (int32_t)(bdown >> BTN_OCT_UP & 1u) - (int32_t)(bdown >> BTN_OCT_DOWN & 1u);
     if (d) {
-        if (menu_sel == MR_LESSONS && d > 0) { les_enter(les_pick); menu_on = 0; view = V_PAT; wr = 1; chainm = 0; pg = 0; sel = 0; home_used = 1; les_t0 = fm1_ms; dirty = 1; return; }
+        if (menu_sel >= MR_GSET && d > 0) { uint8_t rows[8]; menu_grp = (uint8_t)(menu_sel - MR_GSET + 1u); menu_rows(rows); menu_sel = rows[0]; return; }       /* a group */
+        if (menu_sel == MR_LESSONS && d > 0) { les_list_open(); return; }
         if (menu_sel == MR_CLOCK) { lset.sync = (uint8_t)((lset.sync + 3 + d) % 3); sync_mode = lset.sync; set_dirty = 1; }
         else if (menu_sel == MR_CHAN) { lset.chan = (uint8_t)((lset.chan + 17 + d) % 17); set_dirty = 1; }
         else if (menu_sel == MR_TIPS) { lset.pad[0] ^= QS_NOTIPS; set_dirty = 1; }                      /* the switches: either button flips the row */
@@ -247,7 +261,7 @@ static void menu_input(uint32_t bdown)
                 demo_restore();
                 if (lab_load(lab_slot) != 0) core_init();
                 lab_loaded = lab_exists(lab_slot); lab_dirty = 0; pv_dirty = 1; set_dirty = 0;
-                menu_sel = MR_BAT;                                                                     /* (the row hides itself again) */
+                menu_sel = MR_RESET;                                                                   /* (the row hides itself again) */
             }
         }
         else if (menu_sel == MR_RESET && d > 0) reset_ask = 1;
@@ -294,7 +308,7 @@ static void kit_open(void)
 static void kit_close(int keep)
 {
     kit_on = 0; pick_i = 8;
-    if (keep) lab_edited();
+    if (keep) { lab_edited(); gl_kits++; }
     else { memcpy(kp, kb_patch, sizeof kp); memcpy(knob, kb_knob, sizeof knob); memcpy(snm, kb_snm, sizeof snm); }
     pv_dirty = 1; pv_t = fm1_ms; pv_play = 0; dirty = 1;
 }
@@ -334,12 +348,18 @@ static void ui_input(uint32_t keys, uint32_t kdown, uint32_t kup, uint32_t b, ui
         return;
     }
 
-    if (menu_on) { menu_input(bdown); return; }
-    if (les_on && (bdown >> BTN_HOME & 1u)) { les_exit(); home_used = 1; view = V_PAT; wr = 0; dirty = 1; return; }                      /* HOME leaves a lesson */
-    if (les_on && les_done && (bdown >> BTN_OCT_UP & 1u)) { uint32_t nx = (les_i + 1u) % NLESSON; les_exit(); les_enter(nx); les_t0 = fm1_ms; dirty = 1; return; }
+    if (menu_on) { if (les_list_on) les_list_input(bdown); else menu_input(bdown); return; }
+    if (les_on && !gl_active() && (bdown >> BTN_HOME & 1u)) { les_exit(); home_used = 1; view = V_PAT; wr = 0; dirty = 1; return; }                      /* HOME leaves a lesson */
+    if (les_on && les_done && (bdown >> BTN_OCT_UP & 1u)) { les_begin((les_i + 1u) % LES_ALL); return; }
+    if (gl_reading()) {                                                                                                                          /* a masterclass page: OCT+ goes on, HOME puts it away */
+        if (bdown >> BTN_OCT_UP & 1u) { gl_read_next(); return; }
+        if (bdown >> BTN_HOME & 1u) { gl_hide = 1; home_used = 1; dirty = 1; return; }
+    }
+    if (les_on && les_done && (bdown >> BTN_OCT_DOWN & 1u)) { les_exit(); home_used = 1; view = V_PAT; wr = 0; dirty = 1; return; }       /* the last card: OCT- ends it */
     if (kit_on) { kit_input(kdown, bdown); return; }
-    if (!les_on && (b >> BTN_GLO & 1u) && (b >> BTN_HOME & 1u) && (bdown & (1u << BTN_GLO | 1u << BTN_HOME))) {        /* GLO + HOME, either first: the menu */
-        menu_on = 1; menu_sel = 0; reset_ask = 0; help_on = 0; man_lock = 0; qs_pick = 0; home_used = 1; fx_layer = 0; fx_latch = 0; dirty = 1;
+    if ((!les_on || gl_active()) && (b >> BTN_GLO & 1u) && (b >> BTN_HOME & 1u) && (bdown & (1u << BTN_GLO | 1u << BTN_HOME))) {
+        les_leave();        /* GLO + HOME, either first: the menu */
+        menu_on = 1; les_list_on = 0; menu_grp = 0; menu_sel = MR_LESSONS; reset_ask = 0; help_on = 0; man_lock = 0; qs_pick = 0; home_used = 1; fx_layer = 0; fx_latch = 0; dirty = 1;
         if (pick_on) { pick_on = 0; pick_leave(); }
         return;
     }
@@ -367,7 +387,8 @@ static void ui_input(uint32_t keys, uint32_t kdown, uint32_t kup, uint32_t b, ui
         } else { view = (uint8_t)((view + 1u) % NVIEW); chainm = 0; fx_layer = 0; fx_latch = 0; aud_loop = 0; help_on = 0; }
         dirty = 1;
     }
-    if (bdown >> BTN_GLO & 1u) { if (man_lock) {} else if (!help_on) man_open(man_for_screen(), 0u); else man_toc ^= 1u; dirty = 1; }       /* (GLO does nothing inside the quick start) */
+    if ((bdown >> BTN_GLO & 1u) && gl_active() && !help_on) { gl_hide ^= 1u; dirty = 1; }
+    else if (bdown >> BTN_GLO & 1u) { if (man_lock) {} else if (!help_on) man_open(man_for_screen(), 0u); else man_toc ^= 1u; dirty = 1; }       /* (GLO does nothing inside the quick start) */
     if (help_on) { man_input(bdown); return; }
     if (pick_on) {
         if ((e = fm1_enc_take(ENC_SELECT)) != 0) { pick_sel = (uint8_t)((pick_sel + 12 + (e % 12)) % 12u); dirty = 1; pick_aud = 1; pick_t = fm1_ms; }
@@ -470,7 +491,7 @@ static void ui_input(uint32_t keys, uint32_t kdown, uint32_t kup, uint32_t b, ui
         uint32_t kb = 1u << WHITE[i];
         if (kup & kb) { if (held_step == (int8_t)i) held_step = -1; }
         if (!(kdown & kb)) continue;
-        dirty = 1;
+        dirty = 1; gl_keys++;
         if (view == V_PAT && !wr && !chainm && !accm && mutem == 0u && !les_on && !fx_layer) {
             static const uint8_t SQ[4] = {0, 3, 12, 15};
             if (i == SQ[kseq]) kseq++; else kseq = (uint8_t)(i == SQ[0] ? 1u : 0u);
@@ -502,6 +523,9 @@ static void ui_input(uint32_t keys, uint32_t kdown, uint32_t kup, uint32_t b, ui
     if (view == V_SND && pv_run) pv_step();       /* a moment after the last turn: the sound plays, as it now is */
     if (view == V_SND && aud_loop && fm1_ms >= aud_next) { aud_hit(sel); aud_next = fm1_ms + 60000u / bpm; }
     { uint32_t o = bat_pct; bat_poll(); if (o != bat_pct) dsec |= SEC_HDR; }
-    if (les_on) { uint32_t h, n; les_count(&h, &n); if (n && h == n && !les_done) { les_done = 1; les_t0 = fm1_ms; dirty = 1; } else if (!les_done && fm1_ms - les_t0 > 400u) { les_t0 = fm1_ms; dsec |= SEC_BODY; } lab_dirty = 0; }
+    gl_tick();
+    if (les_on && !gl_active()) { uint32_t h, n; les_count(&h, &n); if (n && h == n && !les_done) { les_done = 1; les_mark(les_i); les_t0 = fm1_ms; dirty = 1; } else if (!les_done && fm1_ms - les_t0 > 400u) { les_t0 = fm1_ms; dsec |= SEC_BODY; } lab_dirty = 0; }
+    if (les_saved && !sq_run && fm1_ms - les_saved_t > 2000u) { settings_save(&lset, sizeof lset); les_saved = 0; }
+    if (gl_active()) lab_dirty = 0;
     if (lab_dirty && !sq_run && !sending && !pad_on && fm1_ms - lab_t_edit > 3000u) { do_save(); lab_t_edit = fm1_ms; }
 }

@@ -55,7 +55,7 @@ Brothers Link is how the three play together over Bluetooth: Bluetooth Low Energ
 
 - Tempo, play and stop follow the leader. Followers start at the next bar.
 - Sidechain: followers duck on the leader's kicks. Drumlab sends its first lane's, and ducks the whole mix when it follows.
-- Patterns: when the leader changes pattern, followers change at the end of their loop. Swing comes along.
+- Patterns: when the leader changes pattern, followers change at the end of their loop. A pattern with nothing in it is skipped. Swing comes along.
 - Punch-in FX: hold pads 1 to 8 on the leader and the followers do it too.
 - Key: Chipbox and Smileyface send theirs. Drumlab has no notes, so it has no Key row.
 
