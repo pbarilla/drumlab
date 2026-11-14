@@ -350,7 +350,7 @@ static void ui_input(uint32_t keys, uint32_t kdown, uint32_t kup, uint32_t b, ui
 
     if (menu_on) { if (les_list_on) les_list_input(bdown); else menu_input(bdown); return; }
     if (les_on && !gl_active() && (bdown >> BTN_HOME & 1u)) { les_exit(); home_used = 1; view = V_PAT; wr = 0; dirty = 1; return; }                      /* HOME leaves a lesson */
-    if (les_on && les_done && (bdown >> BTN_OCT_UP & 1u)) { les_begin((les_i + 1u) % LES_ALL); return; }
+    if (les_on && les_done && (bdown >> BTN_OCT_UP & 1u)) { les_begin(les_at((les_pos(les_i) + 1u) % LES_ALL)); return; }
     if (gl_reading()) {                                                                                                                          /* a masterclass page: OCT+ goes on, HOME puts it away */
         if (bdown >> BTN_OCT_UP & 1u) { gl_read_next(); return; }
         if (bdown >> BTN_HOME & 1u) { gl_hide = 1; home_used = 1; dirty = 1; return; }

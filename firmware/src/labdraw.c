@@ -470,7 +470,7 @@ static void draw_lanes(int32_t xa, int32_t xb)                      /* the four 
         b[0] = (char)('1' + l); b[1] = 0;
         if (on) { rrect_o(10, y, 22, 20, 5, K_CREAM, tab); ttx(16, y + 3, b, K_BG, 2); }          /* a bigger, lit tab */
         else { rrect(12, y + 2, 18, 16, 4, tab); ttx(18, y + 6, b, K_BG, 1); }
-        for (s = 0; s < 16u; s++) if (cell_x(s) + 16 > xa && cell_x(s) - 6 < xb) { draw_hole(l, s, m); if (les_on) les_ghost(l, s); }
+        for (s = 0; s < 16u; s++) if (cell_x(s) + 16 > xa && cell_x(s) - 6 < xb) { draw_hole(l, s, m); if (les_on && !gl_active()) les_ghost(l, s); }
         if (on) {                                                                 /* a frame round the whole sheet in the lane's colour */
             cv_rect(0, y - 2, 240, 2, tab); cv_rect(0, y + 20, 240, 2, tab); cv_rect(0, y - 2, 2, 24, tab); cv_rect(238, y - 2, 2, 24, tab);
         } else tint(2, y, 236, 20, C_BLACK, 70);                                  /* the others sit back, a little darker */
@@ -528,6 +528,17 @@ static void pat_body(void)
     if (fx_layer) { draw_fx(); return; }
     draw_rail(); draw_lanes(0, 240); draw_head(sq_run ? (int32_t)cur_step() : 0, sq_run);
 }
+static void txt_ml(int32_t x, int32_t y, const char *t, uint16_t col)     /* a text of up to three lines, split at \n */
+{
+    char ln[34];
+    while (*t) {
+        uint32_t n = 0;
+        while (*t && *t != '\n' && n < 33u) ln[n++] = *t++;
+        ln[n] = 0;
+        if (*t == '\n') t++;
+        txt(x, y, ln, col); y += 10;
+    }
+}
 static void draw_lesson(void)                                       /* the lesson: its name, what to do, how far you are */
 {
     const lesson_t *l = &lessons[les_i];
@@ -538,9 +549,9 @@ static void draw_lesson(void)                                       /* the lesso
     e = t; *e++ = (char)('0' + les_i + 1u); *e++ = '/'; *e++ = (char)('0' + NLESSON); *e = 0;
     txt(18, 156, l->name, K_AMB); txt(222 - text_w(&FONT_S, t), 156, t, RGB(160, 154, 134));
     if (les_done) { txt(18, 173, "NICE!", K_MINT); txt(222 - text_w(&FONT_S, "OCT+ Next  OCT- Done"), 173, "OCT+ Next  OCT- Done", K_CREAM); }
-    else txt(18, 173, l->tip, K_CREAM);
+    else txt_ml(18, 168, l->tip, K_CREAM);
     seg = n ? h * 20u / n : 0u;
-    for (i = 0; i < 20u; i++) cv_rect(18 + (int32_t)i * 10, 194, 8, 10, i < seg ? K_MINT : RGB(46, 44, 58));
+    for (i = 0; i < 20u; i++) cv_rect(18 + (int32_t)i * 10, 203, 8, 8, i < seg ? K_MINT : RGB(46, 44, 58));
 }
 static void draw_gltab(void)                                        /* the lesson is put away (GLO): a small tab at the top */
 {
@@ -585,9 +596,9 @@ static void draw_glcard(void)                                       /* the guide
     txt(18, 4, g->name, K_AMB);
     if (les_done) { txt(18, 21, "THAT'S IT!", K_MINT); txt(222 - text_w(&FONT_S, "OCT+ Next  OCT- Done"), 21, "OCT+ Next  OCT- Done", K_CREAM); }
     else if (gl_ok) txt(18, 21, GL_PRAISE[(les_i * 5u + gl_step * 3u) % 9u], K_MINT);
-    else txt(18, 21, g->s[gl_step].t, K_CREAM);
+    else txt_ml(18, 20, g->s[gl_step].t, K_CREAM);
     seg = done * 20u / g->n;
-    for (i = 0; i < 20u; i++) cv_rect(18 + (int32_t)i * 10, 42, 8, 10, i < seg ? K_MINT : RGB(46, 44, 58));
+    for (i = 0; i < 20u; i++) cv_rect(18 + (int32_t)i * 10, 49, 8, 8, i < seg ? K_MINT : RGB(46, 44, 58));
 }
 static void pat_ctrl(void)
 {
@@ -1015,7 +1026,7 @@ static void draw_lessons(void)                                      /* the lesso
     e = numu(e, les_ndone()); *e++ = '/'; e = numu(e, LES_ALL); *e = 0;
     txt(228 - text_w(&FONT_S, t), 46, t, RGB(160, 154, 134));
     for (i = 0; i < 7u && top + i < LES_ALL; i++) {
-        const uint32_t n = top + i, on = n == les_pick, dn = les_isdone(n);
+        const uint32_t p = top + i, n = les_at(p), on = p == les_pick, dn = les_isdone(n);
         const int32_t y = 62 + (int32_t)i * 18;
         rrect_o(8, y, 218, 17, 3, on ? K_CREAM : K_CHRD, on ? RGB(58, 52, 74) : K_PLATE);
         if (dn) { cv_rect(16, y + 8, 2, 2, K_MINT); cv_rect(18, y + 10, 2, 2, K_MINT); cv_rect(20, y + 8, 2, 2, K_MINT); cv_rect(22, y + 6, 2, 2, K_MINT); cv_rect(24, y + 4, 2, 2, K_MINT); }

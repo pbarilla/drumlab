@@ -13,41 +13,40 @@ typedef struct { const char *name; uint8_t setup, n; const gstep_t *s; uint8_t m
 #define GST(t, v, o, n) {t, GV_##v, GO_##o, n, 0, 0}
 #define GSTA(t, v, o, n, a) {t, GV_##v, GO_##o, n, a, 0}
 #define GRD(title, text, patch) {text, GV_READ, GO_EQ, patch, 0, title}
+#include "lessons_pages.h"
 static const glesson_t GLESSON[] = {
-    {"GET AROUND", GS_EMPTY, 3, (const gstep_t[]){GST("Tap HOME for the next view", VIEW, CHG, 0), GST("Tap HOME for another view", VIEW, CHG, 0), GST("Tap HOME until PTN shows", VIEW, EQ, 0)}},
-    {"PLAY A PAD", GS_EMPTY, 3, (const gstep_t[]){GST("Press a key to hear a sound", KEYS, UP, 1), GST("Turn PRESETS to pick sound", SEL, CHG, 0), GST("Press a key to hear it", KEYS, UP, 1)}},
-    {"YOUR FIRST BEAT", GS_EMPTY, 5, (const gstep_t[]){GST("Tap REC to turn WRITE on", WR, EQ, 1), GST("Press 4 keys to place hits", HITS, UP, 4), GST("Turn PRESETS to pick sound", SEL, CHG, 0),
-        GST("Press 3 more keys for hits", HITS, UP, 3), GST("Press PLAY to hear it", RUN, EQ, 1)}},
-    {"SOUNDS", GS_BEAT, 3, (const gstep_t[]){GST("Turn PRESETS to pick sound", SEL, CHG, 0), GST("Press 3 keys to add hits", HITS, UP, 3), GST("Press PLAY to hear it", RUN, EQ, 1)}},
-    {"ACCENTS", GS_BEATQ, 4, (const gstep_t[]){GST("Tap ENV for accent mode", ACCM, EQ, 1), GST("Press 2 keys to mark steps", ACC, UP, 2), GST("Tap ENV to leave accents", ACCM, EQ, 0),
+#include "lessons_intro.h"
+    {"SOUNDS", GS_BEAT, 4, (const gstep_t[]){GLI_0 GST("Turn PRESETS to pick sound", SEL, CHG, 0), GST("Press 3 keys to add hits", HITS, UP, 3), GST("Press PLAY to hear it", RUN, EQ, 1)}},
+    {"ACCENTS", GS_BEATQ, 5, (const gstep_t[]){GLI_1 GST("Tap ENV for accent mode", ACCM, EQ, 1), GST("Press 2 keys to mark steps", ACC, UP, 2), GST("Tap ENV to leave accents", ACCM, EQ, 0),
         GST("Press PLAY to hear them", RUN, EQ, 1)}},
-    {"TEMPO AND SWING", GS_BEATQ, 4, (const gstep_t[]){GST("Press PLAY to start", RUN, EQ, 1), GST("Turn KNOB 1 to raise tempo", BPM, UP, 8), GST("Turn KNOB 2 for swing", SWING, UP, 3),
-        GST("Press PLAY to stop", RUN, EQ, 0)}},
-    {"PITCH AND MORPH", GS_BEATQ, 3, (const gstep_t[]){GST("Turn KNOB 3 to change pitch", K3, CHG, 0), GST("Turn KNOB 4 to change morph", K4, CHG, 0), GST("Press a key to hear it", KEYS, UP, 1)}},
-    {"PATTERNS", GS_BEAT, 4, (const gstep_t[]){GST("Turn SELECT to pick pattern", CURPAT, CHG, 0), GST("Press 3 keys to write steps", HITS, UP, 3),
+    {"TEMPO AND SWING", GS_BEATQ, 5, (const gstep_t[]){GLI_2 GST("Press PLAY to start", RUN, EQ, 1), GST("Turn KNOB 1 to raise tempo", BPM, UP, 8), GST("Turn KNOB 2 for swing", SWING, UP, 3),
+        GST("Press PLAY again to stop", RUN, EQ, 0)}},
+    {"PITCH AND MORPH", GS_BEATQ, 4, (const gstep_t[]){GLI_3 GST("Turn KNOB 3 to change pitch", K3, CHG, 0), GST("Turn KNOB 4 to change morph", K4, CHG, 0), GST("Press a key to hear it", KEYS, UP, 1)}},
+    {"PATTERNS", GS_BEAT, 5, (const gstep_t[]){GLI_4 GST("Turn SELECT to pick pattern", CURPAT, CHG, 0), GST("Press 3 keys to write steps", HITS, UP, 3),
         GST("Press OCT+ to copy it on", CURPAT, CHG, 0), GST("Turn SELECT to pattern 1", CURPAT, EQ, 0)}},
-    {"CHAIN PATTERNS", GS_CHAIN, 5, (const gstep_t[]){GST("Tap SEL for chain mode", CHAINM, EQ, 1), GST("Press 2 keys to build chain", CHAIN, UP, 2), GST("Tap SEL to leave chain mode", CHAINM, EQ, 0),
-        GST("Press PLAY to hear chain", RUN, EQ, 1), GST("Press PLAY to stop", RUN, EQ, 0)}},
-    {"MUTE AND SOLO", GS_BEATQ, 5, (const gstep_t[]){GST("Press PLAY to start", RUN, EQ, 1), GST("Tap ARP for mute mode", MUTEM, EQ, 1), GST("Press a key to mute a lane", KEYS, UP, 1),
+    {"CHAIN PATTERNS", GS_CHAIN, 6, (const gstep_t[]){GLI_5 GST("Tap SEL for chain mode", CHAINM, EQ, 1), GST("Press 2 keys to build chain", CHAIN, UP, 2), GST("Tap SEL to leave chain mode", CHAINM, EQ, 0),
+        GST("Press PLAY to hear chain", RUN, EQ, 1), GST("Press PLAY again to stop", RUN, EQ, 0)}},
+    {"MUTE AND SOLO", GS_BEATQ, 6, (const gstep_t[]){GLI_6 GST("Press PLAY to start", RUN, EQ, 1), GST("Tap ARP for mute mode", MUTEM, EQ, 1), GST("Press a key to mute a lane", KEYS, UP, 1),
         GST("Tap ARP again for solo", MUTEM, EQ, 2), GST("Tap ARP to hear all again", MUTEM, EQ, 0)}},
-    {"PUNCH-IN FX", GS_BEATQ, 4, (const gstep_t[]){GST("Press PLAY to start", RUN, EQ, 1), GST("Tap FX for the effects", FX, EQ, 1), GST("Hold a key for an effect", FXM, UP, 1),
+    {"PUNCH-IN FX", GS_BEATQ, 5, (const gstep_t[]){GLI_7 GST("Press PLAY to start", RUN, EQ, 1), GST("Tap FX for the effects", FX, EQ, 1), GST("Hold a key for an effect", FXM, UP, 1),
         GST("Tap FX to leave", FX, EQ, 0)}},
-    {"UNDO AND CLEAR", GS_BEAT, 3, (const gstep_t[]){GST("Press 3 keys to add hits", HITS, UP, 3), GST("Tap LFO to undo", UNDOS, UP, 1), GST("Hold EDIT to clear pattern", HITS, EQ, 0)}},
-    {"SOUND LAB", GS_BEATQ, 4, (const gstep_t[]){GST("Tap HOME until LAB shows", VIEW, EQ, 1), GST("Turn ALGORITHM to flip page", PG, CHG, 0), GST("Turn KNOB 1 to tweak sound", KP, CHG, 0),
+    {"UNDO AND CLEAR", GS_BEAT, 4, (const gstep_t[]){GLI_8 GST("Press 3 keys to add hits", HITS, UP, 3), GST("Tap LFO to undo", UNDOS, UP, 1), GST("Hold EDIT to clear pattern", HITS, EQ, 0)}},
+    {"A BEAT FROM ZERO", GS_EMPTY, 7, (const gstep_t[]){GLI_14 GST("Tap REC to turn WRITE on", WR, EQ, 1), GST("Press 8 keys to place hits", HITS, UP, 8), GST("Tap ENV for accent mode", ACCM, EQ, 1),
+        GST("Press 2 keys to mark steps", ACC, UP, 2), GST("Turn KNOB 1 to set tempo", BPM, CHG, 0), GST("Press PLAY to hear it", RUN, EQ, 1)}},
+    {"SOUND LAB", GS_BEATQ, 5, (const gstep_t[]){GLI_9 GST("Tap HOME until LAB shows", VIEW, EQ, 1), GST("Turn ALGORITHM to flip page", PG, CHG, 0), GST("Turn KNOB 1 to tweak sound", KP, CHG, 0),
         GST("Press a key to hear it", KEYS, UP, 1)}},
-    {"PATCH A AND B", GS_BEATQ, 6, (const gstep_t[]){GST("Tap HOME until LAB shows", VIEW, EQ, 1), GST("Tap SEL to edit patch B", SIDE, EQ, 1), GST("Turn a knob to shape B", KP, CHG, 0),
+    {"PATCH A AND B", GS_BEATQ, 7, (const gstep_t[]){GLI_10 GST("Tap HOME until LAB shows", VIEW, EQ, 1), GST("Tap SEL to edit patch B", SIDE, EQ, 1), GST("Turn a knob to shape B", KP, CHG, 0),
         GST("Tap SEL to return to A", SIDE, EQ, 0), GST("Tap HOME until PTN shows", VIEW, EQ, 0), GST("Turn KNOB 4 to morph A-B", K4, CHG, 0)}},
-#include "lessons_mc_2.h"
-    {"ROLL A KIT", GS_BEATQ, 3, (const gstep_t[]){GST("Tap HOME until LAB shows", VIEW, EQ, 1), GST("Press OCT+ to open the kits", KITON, EQ, 1), GST("Press OCT+ to keep a kit", KITS, UP, 1)}},
-    {"SOUND ENGINES", GS_BEATQ, 9, (const gstep_t[]){GST("Tap HOME until LAB shows", VIEW, EQ, 1), GST("Turn KNOB 1 for WAVE", KP, CHG, 0), GST("Turn ALGORITHM to MOD page", PG, EQ, 1),
+    {"ROLL A KIT", GS_BEATQ, 4, (const gstep_t[]){GLI_11 GST("Tap HOME until LAB shows", VIEW, EQ, 1), GST("Press OCT+ to open the kits", KITON, EQ, 1), GST("Press OCT+ to keep a kit", KITS, UP, 1)}},
+    {"SOUND ENGINES", GS_BEATQ, 10, (const gstep_t[]){GLI_12 GST("Tap HOME until LAB shows", VIEW, EQ, 1), GST("Turn KNOB 1 for WAVE", KP, CHG, 0), GST("Turn ALGORITHM to MOD page", PG, EQ, 1),
         GST("Turn KNOB 3 for AMOUNT", KP, CHG, 0), GST("Turn ALGORITHM to NOISE", PG, EQ, 2), GST("Turn KNOB 1 for FILTER", KP, CHG, 0),
         GST("Turn ALGORITHM to OUT page", PG, EQ, 4), GST("Turn KNOB 1 for DIST", KP, CHG, 0), GST("Press a key to hear it", KEYS, UP, 1)}},
-#include "lessons_mc_1.h"
-#include "lessons_mc_3.h"
-    {"SEND TO THE PO-32", GS_BEATQ, 3, (const gstep_t[]){GST("Tap HOME until SEND shows", VIEW, EQ, 2), GST("Press PLAY: a window opens", ASK, EQ, 1), GST("Press OCT- to cancel", ASK, EQ, 0)}},
-    {"A BEAT FROM ZERO", GS_EMPTY, 6, (const gstep_t[]){GST("Tap REC to turn WRITE on", WR, EQ, 1), GST("Press 8 keys to place hits", HITS, UP, 8), GST("Tap ENV for accent mode", ACCM, EQ, 1),
-        GST("Press 2 keys to mark steps", ACC, UP, 2), GST("Turn KNOB 1 to set tempo", BPM, CHG, 0), GST("Press PLAY to hear it", RUN, EQ, 1)}},
 #include "lessons_guided.h"
+
+#include "lessons_mc_1.h"
+#include "lessons_mc_2.h"
+#include "lessons_mc_3.h"
+    {"SEND TO THE PO-32", GS_BEATQ, 4, (const gstep_t[]){GLI_13 GST("Tap HOME until SEND shows", VIEW, EQ, 2), GST("Press PLAY: a window opens", ASK, EQ, 1), GST("Press OCT- to cancel", ASK, EQ, 0)}},
 };
 static const char *const GL_PRAISE[9] = {"NICE!", "WELL DONE!", "WAY TO GO!", "GOOD!", "GOT IT!", "YES!", "SWEET!", "NAILED IT!", "EASY!"};
 static void gl_patch(uint32_t mc, uint32_t id);                       /* the sound a masterclass chapter starts from (below) */
@@ -55,6 +54,9 @@ static void les_mark(uint32_t i);
 static uint8_t gl_hide, gl_step, gl_ok, gl_pundo;
 static uint32_t gl_kbase, gl_ok_t, gl_snap, gl_keys, gl_kits, gl_undos;
 #define LES_ALL (NLESSON + NGL)
+#define GL_A 2u                                                      /* the lessons written first (lessons_intro.h): the list shows them, then the copy-the-beat lessons, then the rest */
+static uint32_t les_at(uint32_t p) { return p < GL_A ? NLESSON + p : p < GL_A + NLESSON ? p - GL_A : p; }       /* list position -> lesson */
+static uint32_t les_pos(uint32_t i) { return i >= NLESSON && i - NLESSON < GL_A ? i - NLESSON : i < NLESSON ? GL_A + i : i; }
 static uint32_t gl_active(void) { return les_on && les_i >= NLESSON; }
 static uint32_t les_ismc(uint32_t i) { return i >= NLESSON && GLESSON[i - NLESSON].mc != 0u; }
 static const char *les_name(uint32_t i) { return i < NLESSON ? lessons[i].name : GLESSON[i - NLESSON].name; }
@@ -225,7 +227,7 @@ static void les_mark(uint32_t i)                                    /* finished:
 static void les_list_open(void)                                     /* it opens on the first lesson you have not done */
 {
     uint32_t i = 0;
-    while (i < LES_ALL && les_isdone(i)) i++;
+    while (i < LES_ALL && les_isdone(les_at(i))) i++;
     les_pick = i < LES_ALL ? i : 0u;
     les_list_on = 1;
 }
@@ -235,7 +237,7 @@ static void les_list_input(uint32_t bdown)
     (void)fm1_enc_take(ENC_ALGORITHM); (void)fm1_enc_take(ENC_KNOB2); (void)fm1_enc_take(ENC_KNOB3); (void)fm1_enc_take(ENC_KNOB4);
     if (e) { int32_t v = (int32_t)les_pick + (e < -8 ? -8 : e > 8 ? 8 : e); les_pick = (uint32_t)(v < 0 ? 0 : v >= (int32_t)LES_ALL ? (int32_t)LES_ALL - 1 : v); }
     if (bdown & (1u << BTN_HOME | 1u << BTN_GLO)) { les_list_on = 0; menu_on = 0; home_used = 1; }
-    else if (bdown >> BTN_OCT_UP & 1u) { les_list_on = 0; menu_on = 0; les_begin(les_pick); }
+    else if (bdown >> BTN_OCT_UP & 1u) { les_list_on = 0; menu_on = 0; les_begin(les_at(les_pick)); }
     else if (bdown >> BTN_OCT_DOWN & 1u) les_list_on = 0;
     dirty = 1;
 }

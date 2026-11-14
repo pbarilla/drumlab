@@ -43,14 +43,7 @@ DEMOS = [
 ]
 
 # lessons: name, kit, bpm, the pattern to build (ghost steps), a one-line nudge
-LESSONS = [
- ("FOUR FLOOR", 2, 124, pat({0: [0, 4, 8, 12], 2: [2, 6, 10, 14]}), "KICK EVERY BEAT"),
- ("BACKBEAT", 1, 110, pat({0: [0, 8, 10], 1: [4, 12], 2: [0, 2, 4, 6, 8, 10, 12, 14]}), "SNARE ON 2 AND 4"),
- ("BOOM BAP", 3, 90, pat({0: [0, 7, 10], 1: [4, 12], 2: [0, 2, 4, 6, 8, 10, 12, 14]}), "LAZY KICK"),
- ("OFFBEAT HATS", 2, 126, pat({0: [0, 4, 8, 12], 1: [4, 12], 2: [2, 6, 10, 14]}), "HATS BETWEEN THE KICKS"),
- ("ELECTRO", 5, 128, pat({0: [0, 3, 8, 11], 1: [4, 12], 3: [7, 15]}), "SYNCOPATED KICK"),
- ("HAT ROLL", 7, 140, pat({0: [0, 10], 1: [8], 2: [0, 2, 4, 6, 8, 10, 12, 13, 14, 15]}), "FAST HATS AT THE END"),
-]
+LESSONS = []   # the ghost "copy the beat" lessons are gone: the guided lessons (tools/masterclasses.py) replace them
 
 def c_pat(p):
     trig, a = p

@@ -8,7 +8,7 @@ _turn = S.turn
 def _turn4(s, enc, d):                                          # a knob step wants a few clicks
     for _ in range(-(-4 // abs(d)) if 2 <= enc <= 5 and abs(d) < 4 else 1): _turn(s, enc, d)
 S.turn = _turn4
-NL = 6  # the ghost lessons come first
+NL = 0  # no ghost lessons any more
 def W(s, ms=1000): s.wait(ms)
 def A_get(s):
     for _ in range(3): s.tap('HOME'); W(s)
@@ -56,8 +56,8 @@ def A_zero(s):
     W(s); s.tap('ENV'); W(s); s.key(0); s.key(4); W(s); s.tap('ENV'); s.turn(K1, 2); W(s); s.tap('PLAY')
 def A_engines(s):
     s.tap('HOME'); W(s); s.turn(K1, 1); W(s); s.turn(ALGO, 1); W(s); s.turn(K3, 3); W(s); s.turn(ALGO, 1); W(s); s.turn(K1, 3); W(s); s.turn(ALGO, 2); W(s); s.turn(K1, 3); W(s); s.key(0)
-ACTIONS = [A_get, A_pad, A_first, A_sounds, A_acc, A_tempo, A_pitch, A_pat, A_chain, A_mute, A_fx, A_undo, A_lab, A_ab, A_kit, A_engines, A_send, A_zero]
-NAMES18 = ["GET AROUND", "PLAY A PAD", "YOUR FIRST BEAT", "SOUNDS", "ACCENTS", "TEMPO AND SWING", "PITCH AND MORPH", "PATTERNS", "CHAIN PATTERNS", "MUTE AND SOLO", "PUNCH-IN FX", "UNDO AND CLEAR", "SOUND LAB",
+ACTIONS = [A_sounds, A_acc, A_tempo, A_pitch, A_pat, A_chain, A_mute, A_fx, A_undo, A_lab, A_ab, A_kit, A_engines, A_send, A_zero]
+NAMES18 = ["SOUNDS", "ACCENTS", "TEMPO AND SWING", "PITCH AND MORPH", "PATTERNS", "CHAIN PATTERNS", "MUTE AND SOLO", "PUNCH-IN FX", "UNDO AND CLEAR", "SOUND LAB",
            "PATCH A AND B", "ROLL A KIT", "SOUND ENGINES", "SEND TO THE PO-32", "A BEAT FROM ZERO"]
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'tools'))
 import masterclasses
@@ -80,7 +80,11 @@ def data_action(items):                                           # a lesson mad
     return run
 ACTION_BY_NAME = dict(zip(NAMES18, ACTIONS))
 ACTION_BY_NAME.update({name.upper(): data_action(items) for _, name, items in masterclasses.MC})
-ACTION_BY_NAME.update({name.upper(): data_action(items) for name, _, items in masterclasses.GUIDED})
+ACTION_BY_NAME.update({name.upper(): data_action(items) for name, _, items in masterclasses.GUIDED + masterclasses.INTRO})
+def _pre(f):
+    def run(s): s.tap('OCTUP'); W(s, 1300); f(s)
+    return run
+for _n in masterclasses.INTROS: ACTION_BY_NAME[_n] = _pre(ACTION_BY_NAME[_n])
 def lessons_of():                                                 # (name, steps) of every guided lesson, in order
     src = open(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'firmware/src/lablesson.c')).read()
     body = src[src.index('static const glesson_t GLESSON[]'):src.index('static const char *const GL_PRAISE')]
@@ -91,7 +95,7 @@ STEPS = [n for _, n in LESSONS]
 def menu(s, i):
     s.press('GLO'); s.press('HOME'); s.release('HOME'); s.release('GLO'); W(s, 300)
     s.tap('OCTUP'); W(s, 400)                                   # the row opens the list
-    for _ in range(NL + i): s.turn(SELECT, 1); W(s, 60)
+    for _ in range(i if i < 2 else NL + i): s.turn(SELECT, 1); W(s, 60)
     W(s, 100); s.tap('OCTUP'); W(s, 600)
 def run(binary, i):
     s = S(); menu(s, i); ACTION_BY_NAME[LESSONS[i][0]](s); W(s, 1500)

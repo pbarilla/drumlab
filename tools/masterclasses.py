@@ -34,15 +34,19 @@ class R:
 def D(text, v, op, n, a, act): return (text, v, op, n, a, act)
 def KEY(text="Press a key to hear it", k=0): return D(text, "KEYS", "UP", 1, 0, ("key", k))
 def PLAY(text="Press PLAY to hear it"): return D(text, "RUN", "EQ", 1, 0, ("tap", "PLAY"))
-def STOP(text="Press PLAY to stop"): return D(text, "RUN", "EQ", 0, 0, ("tap", "PLAY"))
+def STOP(text="Press PLAY again to stop"): return D(text, "RUN", "EQ", 0, 0, ("tap", "PLAY"))
 def KN(n, text, v, op, num, a, clicks): return D(text, v, op, num, a, ("turn", n, clicks))
 def ALG(page, text): return D(text, "PG", "EQ", page, 0, ("alg", page))
 
 MC = []                                          # (id, name, items)
 GUIDED = []                                      # (name, start patch or 0, items)
+INTRO = []                                       # the first lessons (placed before everything else): the same
+INTROS = {}                                      # a lesson name -> the page that starts it (the lessons written by hand in lablesson.c)
 PATCHES = []
 def masterclass(mid, name, *items): MC.append((mid, name, list(items)))
 def guided(name, start, *items): GUIDED.append((name, start, list(items)))
+def intro(name, start, *items): INTRO.append((name, start, list(items)))
+def page(name, title, body): INTROS[name] = R(title, body)
 def patch(mc, pid, sel=0, a=None, b=None, side=0, pg=0, view="LAB", pitch=128, morph=0, hits=None, accents=(), bpm=0): PATCHES.append((mc, pid, sel, a or PDEF, b, side, pg, view, pitch, morph, hits, tuple(accents), bpm))
 
 # ===== the content goes below this line =====
@@ -132,7 +136,7 @@ masterclass(1, "Masterclass: Anatomy",
   SEG(1, "Turn KNOB 1 for HP", 7, 2, 2),
   PCHG(2, "Turn KNOB 2 for FREQ", 8, 8),
   KEYN(1),
-  R("Q: resonance", "Q sharpens the filter. On the knob, 20 is a Q of 1, 40 a Q of 10, 60 a Q of 107. LP and HP grow a peak: 9 dB at Q 1, 26 dB at Q 10, 41 dB at Q 100. It gets loud, so mind LEVEL.", patch=7),
+  R("Q: resonance", "Q sharpens the filter. On the knob, 20 is a Q of 1, 40 a Q of 10, 60 a Q of 100. LP and HP grow a peak: about 1 dB at Q 1, 20 dB at Q 10, 40 dB at Q 100. It gets loud, so mind LEVEL.", patch=7),
   PCHG(3, "Turn KNOB 3 for Q", 9, 16),
   KEYN(9),
   R("Hat: bright noise", "A hat is noise with the lows cut, and a short tail. MIX is all noise. Noise DECAY 20 is 40 ms, a closed hat. 50 is 330 ms, an open one. The panel starts LP: dull.", patch=8),
@@ -173,7 +177,7 @@ masterclass(2, "Masterclass: Morph",
   HOME_PTN(),
   D("Turn KNOB 4 to half way", "K4", "UP", 120, 0, ("py", "s.turn(K4, 9)")),
   KEYN(0),
-  R("Half way", "Pitch and time are log scales, so half way is the geometric mean: 50% of 60 and 45 Hz is 52 Hz. 50% of 120 and 800 ms is 311 ms. A drum between two drums, not two at once."),
+  R("Half way", "Pitch and time are log scales, so half way is the geometric mean: 50% of 60 and 45 Hz is 52 Hz. 50% of 120 and 800 ms is 310 ms. A drum between two drums, not two at once."),
   D("Turn KNOB 4 up to B", "K4", "UP", 120, 0, ("py", "s.turn(K4, 9)")),
   KEYN(0),
   R("One value a hit", "A hit reads the morph when it starts and keeps it. The morph never moves inside a sound. Motion comes from hit to hit."),
@@ -346,6 +350,60 @@ guided("EQ and level", 4,
   KEYN(1, "Press key 2 to hear it"),
   PCHG(4, "Turn KNOB 4 for LEVEL", 17, 8))
 
+# ---- the first lessons: the panel, then a first beat (these come first in the list)
+def PADS(*ks): return "s.key(%d)" % ks[0] if len(ks) == 1 else "; ".join("s.key(%d); W(s, 150)" % k for k in ks)
+intro("Welcome", 0,
+  R("Welcome", "Drumlab is a drum machine. You pick drum sounds, place them on a row of 16 steps, and it plays them back as a loop. This tour shows you the panel. OCT+ turns a page. HOME hides a page and GLO brings it back."),
+  R("The 16 keys", "The 16 keys along the bottom are drum sounds. Press one to hear it. Later the same keys become your 16 steps."),
+  KEY("Press any key to hear it"),
+  D("Press 3 more keys", "KEYS", "UP", 3, 0, ("py", PADS(1, 2, 3))),
+  R("Four lanes", "The four stripes on the screen are lanes: kicks, snares, hats and percussion. Keys 1, 5, 9 and 13 are four different kicks. Keys 2, 6, 10 and 14 are snares, and so on."),
+  R("PRESETS", "Turn PRESETS to pick the sound you are working on. It is the sound your next written hit will use, and the one LAB shows."),
+  D("Turn PRESETS one notch", "SEL", "CHG", 0, 0, ("turn", "PRESETS", 1)),
+  R("The four knobs", "KNOB 1 to 4 sit in a row, in the same order as the four dials on the screen: TEMPO, SWING, PITCH and MORPH. MASTER is the volume."),
+  KN(1, "Turn KNOB 1 for TEMPO", "BPM", "CHG", 0, 0, 6),
+  R("Odd button names", "A few buttons are named oddly. REC is the WRITE button. ENV is ACCENT. ARP is MUTE. LFO is UNDO. Hold EDIT to clear a pattern. SEL is a button, SELECT is the knob that picks patterns."),
+  R("OCT+ and HOME", "In a lesson, OCT+ turns the page. Out of a lesson, OCT+ on PTN copies the pattern you are on onto the next one. HOME changes view. GLO opens the manual."),
+  R("Three views", "Tap HOME to change view. The bar at the bottom of the screen names them. PTN is where you write beats. LAB is where you shape sounds. SEND copies it all to a PO-32."),
+  D("Tap HOME until LAB shows", "VIEW", "EQ", 1, 0, ("tap", "HOME")),
+  R("This is LAB", "The sound lab. It shows the sound PRESETS picked. ALGORITHM flips between its pages and KNOB 1 to 4 change what is on them. Twist anything: nothing here can break."),
+  HOME_PTN(),
+  R("You have the panel", "Keys, PRESETS, four knobs and HOME: that is most of it. Next up is Your First Beat. Lessons with a gold name are masterclasses: the deep end, for when you are curious. To come back to any lesson, press GLO and HOME together and open LESSONS."))
+intro("Your first beat", 0,
+  R("A beat", "A beat is 16 steps that repeat. A step is a slot in the bar, and a hit on it plays a sound when the loop reaches it. The four stripes on the screen are lanes, each with its own 16 steps."),
+  R("WRITE", "Normally the keys play sounds. Tap REC to turn WRITE on and they become the 16 steps. Press a key to put a hit on that step, press it again to take it away. The WRITE lamp at the top of the screen lights up."),
+  REC_ON(),
+  D("Press keys 1, 5, 9 and 13\nfor a kick on each beat", "HITS", "UP", 4, 0, ("py", PADS(0, 4, 8, 12))),
+  R("Hear it", "Four dots on the first stripe: your kick. Press PLAY and a marker runs along the steps. When it reaches a dot, you hear the sound. It loops until you stop it."),
+  PLAY("Press PLAY to hear it"),
+  R("The snare", "Sound 2 is a snare. A snare on steps 5 and 13 is the backbeat, the 2 and 4 you clap along to."),
+  D("Turn PRESETS to sound 2", "SEL", "EQ", 1, 0, ("turn", "PRESETS", 1)),
+  D("Press keys 5 and 13\nfor the snare", "HITS", "UP", 2, 0, ("py", PADS(4, 12))),
+  R("Hats", "Sound 3 is a hi-hat. Hats between the kicks, on steps 3, 7, 11 and 15, give the beat its drive."),
+  D("Turn PRESETS to sound 3", "SEL", "EQ", 2, 0, ("turn", "PRESETS", 1)),
+  D("Press keys 3, 7, 11, 15\nfor off-beat hats", "HITS", "UP", 4, 0, ("py", PADS(2, 6, 10, 14))),
+  STOP("Press PLAY to stop"),
+  R("That is a beat", "Kick on the beat, snare on 2 and 4, hats in between: the backbone of house, techno and pop. Next, shape it with sounds, accents and tempo."))
+
+page("SOUNDS", "Sounds", "Every key can use a different sound. Turn PRESETS and the hits you write next use that sound. Kicks, snares, hats and percussion live in different lanes, so a beat can use all four at once.")
+page("ACCENTS", "Accents", "An accent is a louder hit. Tap ENV to turn ACCENT on, then press a step to accent it. Press it again to remove it. Accents give a beat bounce.")
+page("TEMPO AND SWING", "Tempo and swing", "KNOB 1 sets the tempo from 60 to 240 beats a minute. KNOB 2 sets swing: it delays every second step so the beat shuffles instead of marching. Try both while it plays.")
+page("PITCH AND MORPH", "Pitch and morph", "KNOB 3 moves the sound up or down by up to 12 semitones. KNOB 4 morphs it between its patch A and patch B. Both change the sound PRESETS picked. Press a key to hear it.")
+page("PATTERNS", "Patterns", "A project holds 16 patterns. Turn SELECT to pick one. Write a verse in one and a variation in the next. OCT+ copies the pattern you are on onto the next one, so you can start from what you have.")
+page("CHAIN PATTERNS", "Chains", "A chain plays patterns one after another, up to 64. Tap SEL for chain mode and press keys to add patterns: key 1 is pattern 1. Tap SEL to leave, then PLAY to hear the whole chain.")
+page("MUTE AND SOLO", "Mute and solo", "ARP is the mute button. Tap it for mute mode, where a key picks a lane. Tap it again for solo, and a third time to hear everything. Keys 1, 5, 9 and 13 share a lane.")
+page("PUNCH-IN FX", "Punch-in FX", "Effects you play live. Tap FX and the 16 keys become pads: hold one for as long as you want its effect, let go and it is gone. Tap FX again to put the pads away.")
+page("UNDO AND CLEAR", "Undo and clear", "Made a mistake? Tap LFO to undo your last change. To start a pattern again, hold EDIT to clear it.")
+page("SOUND LAB", "Sound lab", "LAB is where a sound is built: a tone, a burst of noise and some effects. ALGORITHM flips between the pages and KNOB 1 to 4 change the four settings on each. The sound plays when you let go of a knob.")
+page("PATCH A AND B", "Patch A and B", "Every sound has two versions, patch A and patch B. In LAB, press SEL to choose which one you edit. Back on PTN, KNOB 4 morphs from A to B, so one sound can change as the beat goes round.")
+page("ROLL A KIT", "Kits", "A kit is a set of sounds. In LAB, press OCT+ to open the kits and PLAY to roll the dice for a new one. OCT+ keeps the kit. OCT- puts your old one back.")
+page("SOUND ENGINES", "Sound engines", "Each sound is a tone, a noise burst and a MOD that bends the pitch, plus DIST at the end. This tour visits a few pages. WAVE picks the tone, FILTER shapes the noise, DIST crushes it all.")
+page("SEND TO THE PO-32", "Send to PO-32", "Drumlab can send your sounds and patterns to a PO-32 as audio. You plug a cable from the FM-1 output into the PO-32 input. This lesson only opens the window and cancels it, so nothing is sent.")
+page("A BEAT FROM ZERO", "On your own", "Time to do it yourself. The cards only name the controls. Make a beat, mark some accents, set a tempo and play it. You know how.")
+
+GWHY = {'Lock a step': 'Normally PITCH and MORPH change the whole sound. In WRITE mode, hold a step and turn the knob: that one step keeps its own pitch or morph. One sound can then play a melody or a one-off accent.', 'Morph a beat': 'Every sound has two versions, patch A and patch B, and KNOB 4 blends between them. Turn it up and hits move toward B. A step you lock keeps its own blend.', 'FX pads': 'Tap FX and the 16 keys become effect pads. Hold one while the beat plays: echo repeats the sound, half slows it, bend bends its pitch. Let go and the effect stops.', 'Record the FX': 'Here you shape one sound with EQ and volume. EQ HZ picks which band of the sound to change. EQ DB boosts or cuts it. LEVEL is how loud the sound is against the others.', 'Punch in live': 'Hold REC while the beat plays and press keys: the hits land on the step nearest the marker. That adds a fill in time without stopping. LFO undoes a take you do not like.', 'Accent size': 'An accent is a louder hit. How much louder is set by VELOC on the SOUND page in LAB: more VELOC, bigger accents. First mark some steps, then set how loud they get.', 'Loop and fine': 'In LAB, PLAY loops the sound so you can hear changes as you turn. Hold EDIT while you turn a knob to move in tiny steps, for fine tuning.', 'Mod modes': 'MOD bends the pitch of the tone. DECAY slides it, SINE wobbles it like a siren, NOISE jitters it. RATE sets how fast. Try each one on a key.', 'Noise shapes': 'The noise burst has a shape. EXP falls away fast, LIN ramps down evenly, MOD flutters like a clap. DECAY sets how long it lasts.', 'EQ and level': 'EQ boosts or cuts one band of the sound. EQ HZ picks the band, EQ DB sets how much, up to 40 dB. LEVEL is the volume of the sound.'}
+for _i, (_n, _st, _it) in enumerate(GUIDED): GUIDED[_i] = (_n, _st, [R(_n, GWHY[_n])] + _it)
+
 # ===== the content goes above this line =====
 
 MAXL, WIDTH = 10, 25
@@ -377,7 +435,7 @@ def steps_c(name, items):
             parts.append('GRD(%s, %s, %d)' % (c_str(it.title), c_str("\n".join(lines)), it.patch))
         else:
             t, v, op, n, a, _ = it
-            assert len(t) <= 26, (name, t, len(t))
+            assert all(len(x) <= 30 for x in t.split('\n')) and t.count('\n') < 2, (name, t, len(t))
             assert 0 <= n <= 255 and 0 <= a <= 255, (name, t)
             parts.append('GSTA(%s, %s, %s, %d, %d)' % (c_str(t), v, op, n, a))
     return len(items), ", ".join(parts)
@@ -406,6 +464,16 @@ def emit(root):
         n, st = steps_c(name, items)
         with open(os.path.join(src, "lessons_mc_%d.h" % mid), "w") as f:
             f.write("/* SPDX-License-Identifier: GPL-3.0-only */\n/* A masterclass, made by tools/masterclasses.py (edit that, not this). */\n    {%s, GS_MC, %d, (const gstep_t[]){%s}, %d, 0},\n" % (c_str(name.upper()), n, st, mid))
+    with open(os.path.join(src, "lessons_intro.h"), "w") as f:
+        f.write("/* SPDX-License-Identifier: GPL-3.0-only */\n/* The first lessons and the intro pages, made by tools/masterclasses.py (edit that, not this). */\n")
+        for name, start, items in INTRO:
+            n, st = steps_c(name, items)
+            f.write("    {%s, %s, %d, (const gstep_t[]){%s}, 0, %d},\n" % (c_str(name.upper()), "GS_PATCH" if start else "GS_EMPTY", n, st, start))
+    with open(os.path.join(src, "lessons_pages.h"), "w") as f:
+        f.write("/* SPDX-License-Identifier: GPL-3.0-only */\n/* The page that starts a hand-written lesson, made by tools/masterclasses.py (edit that, not this). */\n")
+        for k, (name, r) in enumerate(INTROS.items()):
+            n, st = steps_c(name, [r])
+            f.write("#define GLI_%d %s,\n" % (k, st))
     with open(os.path.join(src, "lessons_guided.h"), "w") as f:
         f.write("/* SPDX-License-Identifier: GPL-3.0-only */\n/* The guided lessons made from data, by tools/masterclasses.py (edit that, not this). */\n")
         for name, start, items in GUIDED:
@@ -416,4 +484,4 @@ def emit(root):
         for p in PATCHES: f.write(patch_c(p))
 if __name__ == "__main__":
     emit(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    print(len(MC), "masterclasses,", len(GUIDED), "guided lessons,", len(PATCHES), "patches")
+    print(len(INTRO), "intro lessons,", len(INTROS), "pages,", len(MC), "masterclasses,", len(GUIDED), "guided lessons,", len(PATCHES), "patches")

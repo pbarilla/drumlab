@@ -1,0 +1,17 @@
+/* SPDX-License-Identifier: GPL-3.0-only */
+/* The page that starts a hand-written lesson, made by tools/masterclasses.py (edit that, not this). */
+#define GLI_0 GRD("Sounds", "Every key can use a\ndifferent sound. Turn\nPRESETS and the hits you\nwrite next use that\nsound. Kicks, snares,\nhats and percussion live\nin different lanes, so a\nbeat can use all four at\nonce.", 0),
+#define GLI_1 GRD("Accents", "An accent is a louder\nhit. Tap ENV to turn\nACCENT on, then press a\nstep to accent it. Press\nit again to remove it.\nAccents give a beat\nbounce.", 0),
+#define GLI_2 GRD("Tempo and swing", "KNOB 1 sets the tempo\nfrom 60 to 240 beats a\nminute. KNOB 2 sets\nswing: it delays every\nsecond step so the beat\nshuffles instead of\nmarching. Try both while\nit plays.", 0),
+#define GLI_3 GRD("Pitch and morph", "KNOB 3 moves the sound up\nor down by up to 12\nsemitones. KNOB 4 morphs\nit between its patch A\nand patch B. Both change\nthe sound PRESETS picked.\nPress a key to hear it.", 0),
+#define GLI_4 GRD("Patterns", "A project holds 16\npatterns. Turn SELECT to\npick one. Write a verse\nin one and a variation in\nthe next. OCT+ copies the\npattern you are on onto\nthe next one, so you can\nstart from what you have.", 0),
+#define GLI_5 GRD("Chains", "A chain plays patterns\none after another, up to\n64. Tap SEL for chain\nmode and press keys to\nadd patterns: key 1 is\npattern 1. Tap SEL to\nleave, then PLAY to hear\nthe whole chain.", 0),
+#define GLI_6 GRD("Mute and solo", "ARP is the mute button.\nTap it for mute mode,\nwhere a key picks a lane.\nTap it again for solo,\nand a third time to hear\neverything. Keys 1, 5, 9\nand 13 share a lane.", 0),
+#define GLI_7 GRD("Punch-in FX", "Effects you play live.\nTap FX and the 16 keys\nbecome pads: hold one for\nas long as you want its\neffect, let go and it is\ngone. Tap FX again to put\nthe pads away.", 0),
+#define GLI_8 GRD("Undo and clear", "Made a mistake? Tap LFO\nto undo your last change.\nTo start a pattern again,\nhold EDIT to clear it.", 0),
+#define GLI_9 GRD("Sound lab", "LAB is where a sound is\nbuilt: a tone, a burst of\nnoise and some effects.\nALGORITHM flips between\nthe pages and KNOB 1 to 4\nchange the four settings\non each. The sound plays\nwhen you let go of a\nknob.", 0),
+#define GLI_10 GRD("Patch A and B", "Every sound has two\nversions, patch A and\npatch B. In LAB, press\nSEL to choose which one\nyou edit. Back on PTN,\nKNOB 4 morphs from A to\nB, so one sound can\nchange as the beat goes\nround.", 0),
+#define GLI_11 GRD("Kits", "A kit is a set of sounds.\nIn LAB, press OCT+ to\nopen the kits and PLAY to\nroll the dice for a new\none. OCT+ keeps the kit.\nOCT- puts your old one\nback.", 0),
+#define GLI_12 GRD("Sound engines", "Each sound is a tone, a\nnoise burst and a MOD\nthat bends the pitch,\nplus DIST at the end.\nThis tour visits a few\npages. WAVE picks the\ntone, FILTER shapes the\nnoise, DIST crushes it\nall.", 0),
+#define GLI_13 GRD("Send to PO-32", "Drumlab can send your\nsounds and patterns to a\nPO-32 as audio. You plug\na cable from the FM-1\noutput into the PO-32\ninput. This lesson only\nopens the window and\ncancels it, so nothing is\nsent.", 0),
+#define GLI_14 GRD("On your own", "Time to do it yourself.\nThe cards only name the\ncontrols. Make a beat,\nmark some accents, set a\ntempo and play it. You\nknow how.", 0),
